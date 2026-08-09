@@ -1,0 +1,75 @@
+[experiment]
+name = "light"
+seed = 104729
+scheduler = "proposed"
+cpus = 4
+repetitions = 10
+duration_s = 120
+warmup_s = 10
+registry_dir = "/tmp/ai-fusion-scheduler/registry"
+output_dir = "results/light"
+max_concurrent = 32
+
+[policy]
+alpha_ms = 100.0
+beta_ms = 500.0
+aging_horizon_ms = 2000
+batch_base_laxity_ms = 5000
+quantum_ms = 2
+critical_slice_ms = 2
+interactive_slice_ms = 4
+batch_slice_ms = 8
+application_deadline = true
+aging = true
+priority = true
+runtime_source = "proc"
+runtime_ewma_alpha = 0.25
+
+[admission]
+enabled = true
+psi_delay_threshold = 20.0
+psi_reject_threshold = 60.0
+safety_factor = 1.20
+max_delay_ms = 500
+delay_step_ms = 25
+reject_below_priority = 0.80
+
+[[workloads]]
+name = "critical-inference"
+class = "critical"
+kind = "cpu"
+count = 20
+arrival = "poisson"
+start_delay_ms = 100
+interarrival_ms = 180
+runtime_ms = 45
+runtime_jitter_pct = 15.0
+deadline_ms = 180
+priority = 1.0
+
+[[workloads]]
+name = "interactive-preprocess"
+class = "interactive"
+kind = "mixed"
+count = 35
+arrival = "poisson"
+start_delay_ms = 100
+interarrival_ms = 120
+runtime_ms = 70
+runtime_jitter_pct = 20.0
+deadline_ms = 450
+priority = 0.70
+memory_mb = 64
+io_bytes = 2097152
+
+[[workloads]]
+name = "batch-indexing"
+class = "batch"
+kind = "cpu"
+count = 12
+arrival = "fixed"
+start_delay_ms = 0
+interarrival_ms = 250
+runtime_ms = 280
+runtime_jitter_pct = 20.0
+priority = 0.15

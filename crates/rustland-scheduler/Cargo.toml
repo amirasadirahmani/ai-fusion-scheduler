@@ -1,0 +1,42 @@
+[package]
+name = "afs-rustland-scheduler"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+build = "build.rs"
+
+[[bin]]
+name = "afs-rustland-scheduler"
+path = "src/main.rs"
+
+[features]
+default = ["rustland-init5"]
+# scx_rustland_core releases have changed the init signature over time.
+# 2.4.13 uses the five-argument form; init4 is retained as a documented
+# compatibility switch for older pinned host environments.
+rustland-init5 = []
+rustland-init4 = []
+
+[dependencies]
+afs-common = { path = "../common" }
+afs-metadata-manager = { path = "../metadata-manager" }
+afs-policy-core = { path = "../policy-core" }
+anyhow.workspace = true
+clap.workspace = true
+libbpf-rs = "=0.26.2"
+plain = "=0.2.3"
+procfs = "=0.18.0"
+libc.workspace = true
+ctrlc = { workspace = true, features = ["termination"] }
+scx_utils = "=1.1.2"
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+scx_rustland_core = "=2.4.13"
+
+[build-dependencies]
+anyhow.workspace = true
+scx_cargo = "=1.1.2"
+scx_rustland_core = "=2.4.13"

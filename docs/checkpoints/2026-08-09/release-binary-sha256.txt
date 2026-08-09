@@ -1,0 +1,4 @@
+a73b0bfcbb74cdde3ec20135933415a6d979d0907743a9f3f807652def24a5ff  target/release/afs-rustland-scheduler
+50cfdb2499ee8396b27b7c3d0e62c8bf660c92203793263445f5d77ac26e7d03  target/release/afs-workload-generator
+d382bbc245ca19c5782fd7ad2904e4efe33abe8cd01d18f0fd35ef0377594105  target/release/afs-policy-simulator
+26a4a7a61a41bc3600de2b7fde1f078cd2094fa914561f85178409319549fe01  /home/amir/scx/target/release/scx_rustland

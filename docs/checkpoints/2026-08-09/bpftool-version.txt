@@ -1,0 +1,4 @@
+$ bpftool version
+bpftool v7.5.0
+using libbpf v1.5
+features:

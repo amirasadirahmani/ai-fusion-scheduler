@@ -1,0 +1,90 @@
+[experiment]
+name = "massive-data-fusion-pipeline"
+seed = 104729
+scheduler = "proposed"
+cpus = 4
+repetitions = 10
+duration_s = 120
+warmup_s = 5
+registry_dir = "/tmp/ai-fusion-scheduler/registry"
+output_dir = "results/fusion"
+max_concurrent = 48
+
+[policy]
+alpha_ms = 120.0
+beta_ms = 700.0
+aging_horizon_ms = 2500
+batch_base_laxity_ms = 4500
+quantum_ms = 2
+critical_slice_ms = 2
+interactive_slice_ms = 4
+batch_slice_ms = 8
+application_deadline = true
+aging = true
+priority = true
+runtime_source = "proc"
+runtime_ewma_alpha = 0.25
+
+[admission]
+enabled = true
+psi_delay_threshold = 15.0
+psi_reject_threshold = 50.0
+safety_factor = 1.25
+max_delay_ms = 600
+delay_step_ms = 25
+reject_below_priority = 0.80
+
+[pipeline]
+workflows = 20
+workflow_interarrival_ms = 140
+
+[[pipeline.stages]]
+name = "ingestion"
+class = "interactive"
+kind = "io"
+runtime_ms = 45
+deadline_ms = 500
+priority = 0.55
+io_bytes = 4194304
+
+[[pipeline.stages]]
+name = "preprocessing"
+class = "interactive"
+kind = "cpu"
+runtime_ms = 60
+deadline_ms = 400
+priority = 0.65
+
+[[pipeline.stages]]
+name = "feature-extraction"
+class = "interactive"
+kind = "cpu"
+runtime_ms = 85
+deadline_ms = 320
+priority = 0.75
+
+[[pipeline.stages]]
+name = "fusion"
+class = "critical"
+kind = "mixed"
+runtime_ms = 95
+deadline_ms = 280
+priority = 0.95
+memory_mb = 160
+io_bytes = 1048576
+
+[[pipeline.stages]]
+name = "decision-alert"
+class = "critical"
+kind = "cpu"
+runtime_ms = 30
+deadline_ms = 120
+priority = 1.0
+
+[[pipeline.stages]]
+name = "archival-indexing"
+class = "batch"
+kind = "io"
+runtime_ms = 150
+priority = 0.10
+io_bytes = 8388608

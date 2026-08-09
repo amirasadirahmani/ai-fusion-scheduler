@@ -1,0 +1,8 @@
+Checkpoint captured at: /home/amir/project/ai-fusion-scheduler-v0.2.0/ai-fusion-scheduler/docs/checkpoints/2026-08-09
+
+Review next:
+  git status
+  git diff
+
+Suggested commit after review:
+  git commit -m "checkpoint: working sched_ext AFS with admission v2"

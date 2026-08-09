@@ -1,0 +1,16 @@
+$ rustup show
+Default host: aarch64-unknown-linux-gnu
+rustup home:  /home/amir/.rustup
+
+installed toolchains
+--------------------
+stable-aarch64-unknown-linux-gnu (default)
+1.82.0-aarch64-unknown-linux-gnu
+1.97.1-aarch64-unknown-linux-gnu (active)
+
+active toolchain
+----------------
+name: 1.97.1-aarch64-unknown-linux-gnu
+active because: overridden by '/home/amir/project/ai-fusion-scheduler-v0.2.0/ai-fusion-scheduler/rust-toolchain.toml'
+installed targets:
+  aarch64-unknown-linux-gnu

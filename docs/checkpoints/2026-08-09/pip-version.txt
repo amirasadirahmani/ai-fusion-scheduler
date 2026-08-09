@@ -1,0 +1,2 @@
+$ python3 -m pip --version
+pip 25.1.1 from /usr/lib/python3/dist-packages/pip (python 3.13)

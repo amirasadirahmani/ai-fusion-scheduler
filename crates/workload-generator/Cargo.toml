@@ -1,0 +1,24 @@
+[package]
+name = "afs-workload-generator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "afs-workload-generator"
+path = "src/main.rs"
+
+[dependencies]
+afs-common = { path = "../common" }
+afs-metadata-manager = { path = "../metadata-manager" }
+afs-policy-core = { path = "../policy-core" }
+anyhow.workspace = true
+clap.workspace = true
+csv.workspace = true
+ctrlc.workspace = true
+libc.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

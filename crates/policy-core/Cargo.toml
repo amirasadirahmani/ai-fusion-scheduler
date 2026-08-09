@@ -1,0 +1,12 @@
+[package]
+name = "afs-policy-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+afs-common = { path = "../common" }
+anyhow.workspace = true
+serde.workspace = true
+thiserror.workspace = true

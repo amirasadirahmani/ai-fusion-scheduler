@@ -1,0 +1,63 @@
+[experiment]
+name = "periodic-sporadic"
+seed = 104729
+scheduler = "sched_deadline"
+cpus = 4
+repetitions = 10
+duration_s = 60
+warmup_s = 5
+registry_dir = "/tmp/ai-fusion-scheduler/registry"
+output_dir = "results/periodic"
+max_concurrent = 32
+
+[policy]
+alpha_ms = 100.0
+beta_ms = 500.0
+aging_horizon_ms = 2000
+batch_base_laxity_ms = 5000
+quantum_ms = 2
+critical_slice_ms = 2
+interactive_slice_ms = 4
+batch_slice_ms = 8
+application_deadline = true
+aging = true
+priority = true
+runtime_source = "proc"
+runtime_ewma_alpha = 0.25
+
+[admission]
+enabled = false
+psi_delay_threshold = 20.0
+psi_reject_threshold = 60.0
+safety_factor = 1.10
+max_delay_ms = 0
+delay_step_ms = 0
+reject_below_priority = 0.80
+
+[[workloads]]
+name = "periodic-critical"
+class = "critical"
+kind = "cpu"
+count = 40
+arrival = "fixed"
+start_delay_ms = 100
+interarrival_ms = 200
+runtime_ms = 35
+runtime_jitter_pct = 5.0
+deadline_ms = 150
+sched_period_ms = 200
+priority = 1.0
+
+[[workloads]]
+name = "sporadic-interactive"
+class = "interactive"
+kind = "cpu"
+count = 35
+arrival = "poisson"
+start_delay_ms = 100
+interarrival_ms = 250
+runtime_ms = 45
+runtime_jitter_pct = 10.0
+deadline_ms = 200
+sched_period_ms = 250
+priority = 0.70

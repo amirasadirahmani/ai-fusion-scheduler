@@ -1,0 +1,2 @@
+$ sh -c ls -lh /sys/kernel/btf/vmlinux 2>/dev/null || true
+-r--r--r-- 1 root root 6.2M Aug  9 01:38 /sys/kernel/btf/vmlinux

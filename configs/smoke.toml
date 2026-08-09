@@ -1,0 +1,73 @@
+[experiment]
+name = "smoke"
+seed = 104729
+scheduler = "proposed"
+cpus = 2
+repetitions = 1
+duration_s = 15
+warmup_s = 0
+registry_dir = "/tmp/ai-fusion-scheduler/registry"
+output_dir = "results/smoke"
+max_concurrent = 8
+
+[policy]
+alpha_ms = 50.0
+beta_ms = 150.0
+aging_horizon_ms = 500
+batch_base_laxity_ms = 1000
+quantum_ms = 2
+critical_slice_ms = 2
+interactive_slice_ms = 4
+batch_slice_ms = 8
+application_deadline = true
+aging = true
+priority = true
+runtime_source = "queued"
+runtime_ewma_alpha = 0.25
+
+[admission]
+enabled = true
+psi_delay_threshold = 50.0
+psi_reject_threshold = 90.0
+safety_factor = 1.10
+max_delay_ms = 100
+delay_step_ms = 10
+reject_below_priority = 0.80
+
+[[workloads]]
+name = "critical-cpu"
+class = "critical"
+kind = "cpu"
+count = 2
+arrival = "fixed"
+start_delay_ms = 0
+interarrival_ms = 50
+runtime_ms = 25
+runtime_jitter_pct = 5.0
+deadline_ms = 120
+priority = 1.0
+
+[[workloads]]
+name = "interactive-cpu"
+class = "interactive"
+kind = "cpu"
+count = 3
+arrival = "fixed"
+start_delay_ms = 10
+interarrival_ms = 30
+runtime_ms = 40
+runtime_jitter_pct = 10.0
+deadline_ms = 250
+priority = 0.70
+
+[[workloads]]
+name = "batch-cpu"
+class = "batch"
+kind = "cpu"
+count = 2
+arrival = "fixed"
+start_delay_ms = 0
+interarrival_ms = 20
+runtime_ms = 100
+runtime_jitter_pct = 5.0
+priority = 0.15

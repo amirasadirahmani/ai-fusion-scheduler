@@ -1,0 +1,76 @@
+[experiment]
+name = "saturated"
+seed = 104729
+scheduler = "proposed"
+cpus = 4
+repetitions = 10
+duration_s = 120
+warmup_s = 10
+registry_dir = "/tmp/ai-fusion-scheduler/registry"
+output_dir = "results/saturated"
+max_concurrent = 64
+
+[policy]
+alpha_ms = 120.0
+beta_ms = 650.0
+aging_horizon_ms = 2500
+batch_base_laxity_ms = 4500
+quantum_ms = 2
+critical_slice_ms = 2
+interactive_slice_ms = 4
+batch_slice_ms = 8
+application_deadline = true
+aging = true
+priority = true
+runtime_source = "proc"
+runtime_ewma_alpha = 0.25
+
+[admission]
+enabled = true
+psi_delay_threshold = 15.0
+psi_reject_threshold = 45.0
+safety_factor = 1.25
+max_delay_ms = 600
+delay_step_ms = 25
+reject_below_priority = 0.80
+
+[[workloads]]
+name = "critical-inference"
+class = "critical"
+kind = "cpu"
+count = 45
+arrival = "poisson"
+start_delay_ms = 100
+interarrival_ms = 70
+runtime_ms = 65
+runtime_jitter_pct = 20.0
+deadline_ms = 220
+priority = 1.0
+
+[[workloads]]
+name = "interactive-retrieval"
+class = "interactive"
+kind = "mixed"
+count = 70
+arrival = "poisson"
+start_delay_ms = 100
+interarrival_ms = 55
+runtime_ms = 95
+runtime_jitter_pct = 25.0
+deadline_ms = 550
+priority = 0.70
+memory_mb = 96
+io_bytes = 4194304
+
+[[workloads]]
+name = "batch-indexing"
+class = "batch"
+kind = "memory"
+count = 18
+arrival = "fixed"
+start_delay_ms = 0
+interarrival_ms = 100
+runtime_ms = 400
+runtime_jitter_pct = 20.0
+priority = 0.10
+memory_mb = 192

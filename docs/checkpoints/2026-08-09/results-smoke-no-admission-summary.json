@@ -1,0 +1,15 @@
+{
+  "experiment": "smoke",
+  "repetition": 1,
+  "scheduler": "proposed",
+  "started_ns": 31135014724625,
+  "finished_ns": 31135140615378,
+  "total_tasks": 7,
+  "admitted_immediately": 7,
+  "delayed_then_admitted": 0,
+  "rejected": 0,
+  "completed": 7,
+  "failed": 0,
+  "deadline_misses": 0,
+  "result_csv": "results/smoke-no-admission/tasks.csv"
+}

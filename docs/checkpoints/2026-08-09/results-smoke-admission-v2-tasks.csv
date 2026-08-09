@@ -1,0 +1,8 @@
+experiment,repetition,scheduler,task_id,process_id,workflow_id,stage_id,task_name,workload_class,kind,admission,delayed_ns,release_time_ns,start_time_ns,completion_time_ns,absolute_deadline_ns,estimated_runtime_ns,actual_cpu_time_ns,response_time_ns,deadline_missed,exit_code,error
+smoke,1,proposed,1,22566,0,0,critical-cpu-1,critical,cpu,admit,0,32293827714461,32293836575417,32293860722942,32293947714461,25000000,24016958,33008481,false,0,
+smoke,1,proposed,2,22571,0,0,critical-cpu-2,critical,cpu,admit,0,32293877714461,32293884251506,32293909253535,32293997714461,24754240,25001250,31539074,false,0,
+smoke,1,proposed,3,22568,0,0,interactive-cpu-1,interactive,cpu,admit,0,32293837714461,32293844469203,32293884239715,32294087714461,40000000,39711333,46525254,false,0,
+smoke,1,proposed,4,22570,0,0,interactive-cpu-2,interactive,cpu,admit,0,32293867714461,32293872563162,32293909572245,32294117714461,40000000,37008375,41857784,false,0,
+smoke,1,proposed,5,22572,0,0,interactive-cpu-3,interactive,cpu,admit,0,32293897714461,32293906452023,32293950458345,32294147714461,39927833,44005333,52743884,false,0,
+smoke,1,proposed,6,22567,0,0,batch-cpu-1,batch,cpu,admit,0,32293827714461,32293840444435,32293935631195,,100000000,95006916,107916734,,0,
+smoke,1,proposed,7,22569,0,0,batch-cpu-2,batch,cpu,admit,0,32293847714461,32293852966449,32293947973584,,100000000,95006041,100259123,,0,
