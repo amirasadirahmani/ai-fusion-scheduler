@@ -1,0 +1,33 @@
+AFS Git checkpoint
+==================
+
+Repository:
+git@github.com:amirasadirahmani/ai-fusion-scheduler.git
+
+Branch:
+main
+
+Tested commit:
+9314a612d69851bdf194d46ce332c0e94602f431
+
+Annotated tag:
+checkpoint-admission-v2
+
+Tag meaning:
+Working sched_ext AFS checkpoint with validated Admission v2
+
+Validation associated with this tagged commit:
+- afs-policy-core: 10 passed, 0 failed
+- workload-generator: cargo check passed
+- policy-simulator: cargo check passed
+- real sched_ext smoke run completed
+- total tasks: 7
+- completed: 7
+- rejected: 0
+- failed: 0
+- deadline misses: 0
+- critical-cpu-2 admitted and met 120 ms deadline
+
+Important:
+The tag points to the exact tested source commit.
+Later documentation commits on main do not move this tag.
