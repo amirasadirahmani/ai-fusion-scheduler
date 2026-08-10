@@ -50,8 +50,7 @@ impl MetadataRegistry {
             file.write_all(&data)?;
             file.sync_all()?;
         }
-        fs::rename(&tmp, &path)
-            .with_context(|| format!("failed to install {}", path.display()))?;
+        fs::rename(&tmp, &path).with_context(|| format!("failed to install {}", path.display()))?;
         fs::write(self.ready_path(metadata.process_id), b"ready\n")?;
         Ok(path)
     }

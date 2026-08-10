@@ -22,8 +22,8 @@ impl ExperimentConfig {
         let path = path.as_ref();
         let data = fs::read_to_string(path)
             .with_context(|| format!("failed to read {}", path.display()))?;
-        let cfg: Self = toml::from_str(&data)
-            .with_context(|| format!("failed to parse {}", path.display()))?;
+        let cfg: Self =
+            toml::from_str(&data).with_context(|| format!("failed to parse {}", path.display()))?;
         cfg.validate()?;
         Ok(cfg)
     }
@@ -60,7 +60,13 @@ impl ExperimentConfig {
         {
             bail!("policy alpha_ms and beta_ms must be finite and non-negative");
         }
-        match self.policy.runtime_source.trim().to_ascii_lowercase().as_str() {
+        match self
+            .policy
+            .runtime_source
+            .trim()
+            .to_ascii_lowercase()
+            .as_str()
+        {
             "queued" | "proc" => {}
             other => bail!("unknown policy.runtime_source {other}; expected queued or proc"),
         }
@@ -259,13 +265,19 @@ impl WorkloadTemplate {
             bail!("workload {} runtime_ms must be positive", self.name);
         }
         if !self.priority.is_finite() || !(0.0..=1.0).contains(&self.priority) {
-            bail!("workload {} priority must be finite and in [0, 1]", self.name);
+            bail!(
+                "workload {} priority must be finite and in [0, 1]",
+                self.name
+            );
         }
         if !self.runtime_jitter_pct.is_finite()
             || self.runtime_jitter_pct < 0.0
             || self.runtime_jitter_pct > 100.0
         {
-            bail!("workload {} runtime_jitter_pct must be finite and in [0, 100]", self.name);
+            bail!(
+                "workload {} runtime_jitter_pct must be finite and in [0, 100]",
+                self.name
+            );
         }
         if let Some(deadline) = self.deadline_ms {
             if deadline == 0 {
@@ -280,7 +292,10 @@ impl WorkloadTemplate {
                 }
             }
         } else if self.sched_period_ms.is_some() {
-            bail!("workload {} sched_period_ms requires deadline_ms", self.name);
+            bail!(
+                "workload {} sched_period_ms requires deadline_ms",
+                self.name
+            );
         }
         match self.arrival.as_str() {
             "fixed" | "poisson" | "bursty" => {}
@@ -343,36 +358,102 @@ pub struct PipelineStage {
     pub io_bytes: u64,
 }
 
-fn default_seed() -> u64 { 104_729 }
-fn default_cpus() -> usize { 2 }
-fn default_repetitions() -> u32 { 1 }
-fn default_duration_s() -> u64 { 60 }
-fn default_warmup_s() -> u64 { 5 }
-fn default_registry_dir() -> String { "/tmp/ai-fusion-scheduler/registry".into() }
-fn default_output_dir() -> String { "results".into() }
-fn default_max_concurrent() -> usize { 64 }
-fn default_alpha_ms() -> f64 { 100.0 }
-fn default_beta_ms() -> f64 { 500.0 }
-fn default_aging_horizon_ms() -> u64 { 2_000 }
-fn default_batch_base_laxity_ms() -> i64 { 5_000 }
-fn default_quantum_ms() -> u64 { 2 }
-fn default_critical_slice_ms() -> u64 { 2 }
-fn default_interactive_slice_ms() -> u64 { 4 }
-fn default_batch_slice_ms() -> u64 { 8 }
-fn default_runtime_source() -> String { "queued".into() }
-fn default_runtime_ewma_alpha() -> f64 { 0.25 }
-fn default_true() -> bool { true }
-fn default_psi_delay() -> f64 { 20.0 }
-fn default_psi_reject() -> f64 { 60.0 }
-fn default_safety_factor() -> f64 { 1.20 }
-fn default_max_delay_ms() -> u64 { 500 }
-fn default_delay_step_ms() -> u64 { 25 }
-fn default_min_reject_priority() -> f64 { 0.8 }
-fn default_count() -> u32 { 1 }
-fn default_arrival() -> String { "fixed".into() }
-fn default_interarrival_ms() -> u64 { 50 }
-fn default_runtime_ms() -> u64 { 100 }
-fn default_priority() -> f64 { 0.5 }
-fn default_memory_mb() -> usize { 64 }
-fn default_io_bytes() -> u64 { 8 * 1024 * 1024 }
-fn default_workflows() -> u32 { 10 }
+fn default_seed() -> u64 {
+    104_729
+}
+fn default_cpus() -> usize {
+    2
+}
+fn default_repetitions() -> u32 {
+    1
+}
+fn default_duration_s() -> u64 {
+    60
+}
+fn default_warmup_s() -> u64 {
+    5
+}
+fn default_registry_dir() -> String {
+    "/tmp/ai-fusion-scheduler/registry".into()
+}
+fn default_output_dir() -> String {
+    "results".into()
+}
+fn default_max_concurrent() -> usize {
+    64
+}
+fn default_alpha_ms() -> f64 {
+    100.0
+}
+fn default_beta_ms() -> f64 {
+    500.0
+}
+fn default_aging_horizon_ms() -> u64 {
+    2_000
+}
+fn default_batch_base_laxity_ms() -> i64 {
+    5_000
+}
+fn default_quantum_ms() -> u64 {
+    2
+}
+fn default_critical_slice_ms() -> u64 {
+    2
+}
+fn default_interactive_slice_ms() -> u64 {
+    4
+}
+fn default_batch_slice_ms() -> u64 {
+    8
+}
+fn default_runtime_source() -> String {
+    "queued".into()
+}
+fn default_runtime_ewma_alpha() -> f64 {
+    0.25
+}
+fn default_true() -> bool {
+    true
+}
+fn default_psi_delay() -> f64 {
+    20.0
+}
+fn default_psi_reject() -> f64 {
+    60.0
+}
+fn default_safety_factor() -> f64 {
+    1.20
+}
+fn default_max_delay_ms() -> u64 {
+    500
+}
+fn default_delay_step_ms() -> u64 {
+    25
+}
+fn default_min_reject_priority() -> f64 {
+    0.8
+}
+fn default_count() -> u32 {
+    1
+}
+fn default_arrival() -> String {
+    "fixed".into()
+}
+fn default_interarrival_ms() -> u64 {
+    50
+}
+fn default_runtime_ms() -> u64 {
+    100
+}
+fn default_priority() -> f64 {
+    0.5
+}
+fn default_memory_mb() -> usize {
+    64
+}
+fn default_io_bytes() -> u64 {
+    8 * 1024 * 1024
+}
+fn default_workflows() -> u32 {
+    10
+}

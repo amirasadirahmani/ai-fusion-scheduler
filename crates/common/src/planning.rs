@@ -41,8 +41,7 @@ impl PlannedTask {
     pub fn read_manifest(path: impl AsRef<Path>) -> Result<Vec<Self>> {
         let path = path.as_ref();
         let data = fs::read(path).with_context(|| format!("failed to read {}", path.display()))?;
-        serde_json::from_slice(&data)
-            .with_context(|| format!("failed to parse {}", path.display()))
+        serde_json::from_slice(&data).with_context(|| format!("failed to parse {}", path.display()))
     }
 }
 
@@ -102,7 +101,9 @@ pub fn generate_task_manifest(cfg: &ExperimentConfig, repetition: u32) -> Result
                 io_bytes: template.io_bytes,
                 workflow_id: template.workflow_id,
                 stage_id: template.stage_id,
-                sched_period_ns: template.sched_period_ms.map(|v| v.saturating_mul(1_000_000)),
+                sched_period_ns: template
+                    .sched_period_ms
+                    .map(|v| v.saturating_mul(1_000_000)),
                 depends_on_task_id: None,
             });
             task_id = task_id.saturating_add(1);
@@ -115,8 +116,14 @@ pub fn generate_task_manifest(cfg: &ExperimentConfig, repetition: u32) -> Result
 
 /// Generate a deterministic dependency-aware manifest for the lightweight
 /// massive-data-fusion case study. Each workflow is a chain of stages.
-pub fn generate_pipeline_manifest(cfg: &ExperimentConfig, repetition: u32) -> Result<Vec<PlannedTask>> {
-    let pipeline = cfg.pipeline.as_ref().context("configuration has no pipeline section")?;
+pub fn generate_pipeline_manifest(
+    cfg: &ExperimentConfig,
+    repetition: u32,
+) -> Result<Vec<PlannedTask>> {
+    let pipeline = cfg
+        .pipeline
+        .as_ref()
+        .context("configuration has no pipeline section")?;
     let mut tasks = Vec::new();
     let mut task_id = 1u64;
     let seed = cfg
@@ -136,8 +143,8 @@ pub fn generate_pipeline_manifest(cfg: &ExperimentConfig, repetition: u32) -> Re
             // Small deterministic jitter prevents every workflow from being identical while
             // preserving reproducibility across scheduler baselines.
             let multiplier = rng.gen_range(0.92_f64..=1.08_f64);
-            let actual_runtime_ns = ((stage.runtime_ms as f64 * multiplier).round().max(1.0)
-                * 1_000_000.0) as u64;
+            let actual_runtime_ns =
+                ((stage.runtime_ms as f64 * multiplier).round().max(1.0) * 1_000_000.0) as u64;
             tasks.push(PlannedTask {
                 task_id,
                 name: format!("wf-{workflow_id}-{}", stage.name),
@@ -167,7 +174,9 @@ pub fn generate_pipeline_manifest(cfg: &ExperimentConfig, repetition: u32) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{AdmissionConfig, ExperimentSection, PolicyConfig, SchedulerMethod, WorkloadTemplate};
+    use crate::{
+        AdmissionConfig, ExperimentSection, PolicyConfig, SchedulerMethod, WorkloadTemplate,
+    };
 
     #[test]
     fn deterministic_manifest() {

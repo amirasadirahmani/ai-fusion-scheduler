@@ -214,4 +214,6 @@ pub struct WorkerLaunchSpec {
     pub start_stopped: bool,
 }
 
-fn worker_default_true() -> bool { true }
+fn worker_default_true() -> bool {
+    true
+}

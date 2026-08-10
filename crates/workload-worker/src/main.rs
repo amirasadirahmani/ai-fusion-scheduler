@@ -113,7 +113,10 @@ fn execute_work(spec: &WorkerLaunchSpec) -> Result<()> {
         WorkloadKind::Mixed => {
             let cpu = spec.actual_runtime_ns.saturating_mul(2) / 5;
             let mem = spec.actual_runtime_ns.saturating_mul(2) / 5;
-            let io = spec.actual_runtime_ns.saturating_sub(cpu).saturating_sub(mem);
+            let io = spec
+                .actual_runtime_ns
+                .saturating_sub(cpu)
+                .saturating_sub(mem);
             cpu_burn(cpu)?;
             memory_burn(mem, spec.memory_mb)?;
             io_work(io, spec.io_bytes, spec.task_id)
