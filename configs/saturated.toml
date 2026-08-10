@@ -1,20 +1,26 @@
+# Paper pilot v1.
+# Count-driven finite trace.
+# Temporal parameters are dilated approximately 8x from the engineering
+# diagnostic profile to provide sustained behavior for PSI avg10 evaluation.
+# duration_s is currently legacy metadata and does not terminate the trace.
+
 [experiment]
 name = "saturated"
 seed = 104729
 scheduler = "proposed"
 cpus = 4
 repetitions = 10
-duration_s = 120
-warmup_s = 10
+duration_s = 0
+warmup_s = 0
 registry_dir = "/tmp/ai-fusion-scheduler/registry"
 output_dir = "results/saturated"
 max_concurrent = 64
 
 [policy]
-alpha_ms = 120.0
-beta_ms = 650.0
-aging_horizon_ms = 2500
-batch_base_laxity_ms = 4500
+alpha_ms = 800.0
+beta_ms = 4000.0
+aging_horizon_ms = 16000
+batch_base_laxity_ms = 40000
 quantum_ms = 2
 critical_slice_ms = 2
 interactive_slice_ms = 4
@@ -27,11 +33,11 @@ runtime_ewma_alpha = 0.25
 
 [admission]
 enabled = true
-psi_delay_threshold = 15.0
-psi_reject_threshold = 45.0
-safety_factor = 1.25
-max_delay_ms = 600
-delay_step_ms = 25
+psi_delay_threshold = 20.0
+psi_reject_threshold = 60.0
+safety_factor = 1.20
+max_delay_ms = 4000
+delay_step_ms = 200
 reject_below_priority = 0.80
 
 [[workloads]]
@@ -40,11 +46,11 @@ class = "critical"
 kind = "cpu"
 count = 45
 arrival = "poisson"
-start_delay_ms = 100
-interarrival_ms = 70
-runtime_ms = 65
+start_delay_ms = 800
+interarrival_ms = 560
+runtime_ms = 520
 runtime_jitter_pct = 20.0
-deadline_ms = 220
+deadline_ms = 1760
 priority = 1.0
 
 [[workloads]]
@@ -53,11 +59,11 @@ class = "interactive"
 kind = "mixed"
 count = 70
 arrival = "poisson"
-start_delay_ms = 100
-interarrival_ms = 55
-runtime_ms = 95
+start_delay_ms = 800
+interarrival_ms = 440
+runtime_ms = 760
 runtime_jitter_pct = 25.0
-deadline_ms = 550
+deadline_ms = 4400
 priority = 0.70
 memory_mb = 96
 io_bytes = 4194304
@@ -69,8 +75,8 @@ kind = "memory"
 count = 18
 arrival = "fixed"
 start_delay_ms = 0
-interarrival_ms = 100
-runtime_ms = 400
+interarrival_ms = 800
+runtime_ms = 3200
 runtime_jitter_pct = 20.0
 priority = 0.10
 memory_mb = 192
