@@ -37,9 +37,28 @@ Does AFS increase deadline goodput under saturation and overload while preservin
 
 ## Current pilot evidence
 
-Current evidence is diagnostic only. In a scoped-PSI light diagnostic run, all offered tasks completed with zero rejection and zero deadline misses. In an overload A/B diagnostic run on an identical manifest, no-admission completed all work but suffered severe deadline failure, while admission rejected part of the workload and increased offered-load deadline success.
+Current evidence is diagnostic and qualification-only.
 
-These results motivate the final evaluation but are not final claims.
+An early overload pilot exposed a host-level OOM confound caused by large
+per-worker synthetic memory working sets under bursty concurrency. The
+working sets were bounded before experimental freeze without changing task
+counts, release patterns, runtimes, deadlines, priorities, scheduler
+parameters, or admission parameters.
+
+After correction, a four-method overload diagnostic completed without a new
+OOM event. Paper pilot v2 subsequently completed 36/36 structurally valid
+runs across light, saturated, and overload workloads, four primary methods,
+and three repetitions.
+
+The light profile behaves as a low-pressure floor regime, while saturated
+and overload profiles expose differentiated behavior among the compared
+methods.
+
+These pilot performance values are not final claims and must not be used to
+retune workload or scheduler parameters.
+
+Final claims will be based only on the post-freeze benchmark matrix and its
+predefined offered-load and admitted-load metrics.
 
 ## Risks
 
@@ -60,3 +79,18 @@ These results motivate the final evaluation but are not final claims.
 8. Discussion and limitations
 9. Related work
 10. Conclusion
+
+## Frozen analysis policy
+
+Before the final matrix, paper metrics and aggregation are frozen. The primary
+deadline outcome is offered deadline goodput, always reported with rejection,
+completion, and accepted miss rate. Results are also reported for critical,
+interactive, and batch classes.
+
+Each run is analyzed independently and the final ten repetitions are
+aggregated at the repetition level with a two-sided 95% Student-t confidence
+interval. Tasks are not pooled across repetitions. Workload-cgroup CPU PSI and
+AFS-internal scheduler overhead are secondary metrics.
+
+The three-repetition pilot remains qualification evidence only; it is excluded
+from final-paper aggregates and is not used for post-hoc tuning.

@@ -85,9 +85,136 @@ def find_scheduler_stats(tasks_csv: Path) -> dict:
     return {}
 
 
+
+def find_requested_method(tasks_csv: Path) -> str:
+    path = tasks_csv.parent / "run-provenance.txt"
+    if not path.exists():
+        return ""
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("method="):
+            return line.split("=", 1)[1].strip()
+    return ""
+
 def value_or_blank(value: float | int | None) -> float | int | str:
     return "" if value is None else value
 
+
+WORKLOAD_CLASSES = ("critical", "interactive", "batch")
+
+
+def read_workload_pressure(tasks_csv: Path) -> dict[str, dict[str, float]]:
+    path = tasks_csv.parent / "workload-cpu-pressure-final.txt"
+    if not path.exists():
+        return {}
+
+    result: dict[str, dict[str, float]] = {}
+
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        parts = raw.split()
+        if not parts:
+            continue
+
+        values: dict[str, float] = {}
+        for token in parts[1:]:
+            if "=" not in token:
+                continue
+            key, value = token.split("=", 1)
+            try:
+                values[key] = float(value)
+            except ValueError:
+                continue
+
+        result[parts[0]] = values
+
+    return result
+
+
+def summarize_workload_classes(rows: list[dict]) -> dict:
+    output: dict[str, float | int | str] = {}
+
+    for workload_class in WORKLOAD_CLASSES:
+        offered = [
+            r for r in rows
+            if r.get("workload_class") == workload_class
+        ]
+        rejected = [
+            r for r in offered
+            if r.get("admission") == "reject"
+        ]
+        admitted = [
+            r for r in offered
+            if r.get("admission") != "reject"
+        ]
+        completed = [
+            r for r in admitted
+            if parse_int(r.get("completion_time_ns")) is not None
+            and parse_int(r.get("exit_code")) == 0
+        ]
+
+        offered_deadline = [
+            r for r in offered
+            if parse_int(r.get("absolute_deadline_ns")) is not None
+        ]
+        accepted_deadline = [
+            r for r in admitted
+            if parse_int(r.get("absolute_deadline_ns")) is not None
+        ]
+        deadline_completed = [
+            r for r in completed
+            if parse_int(r.get("absolute_deadline_ns")) is not None
+        ]
+        successes = [
+            r for r in deadline_completed
+            if parse_bool(r.get("deadline_missed")) is False
+        ]
+
+        accepted_misses = len(accepted_deadline) - len(successes)
+
+        responses_ms = [
+            value / 1e6
+            for value in (
+                parse_int(r.get("response_time_ns"))
+                for r in completed
+            )
+            if value is not None
+        ]
+
+        prefix = workload_class
+        total = len(offered)
+
+        output[f"{prefix}_offered_tasks"] = total
+        output[f"{prefix}_completed_tasks"] = len(completed)
+        output[f"{prefix}_rejected_tasks"] = len(rejected)
+
+        output[f"{prefix}_completion_rate"] = (
+            len(completed) / total if total else ""
+        )
+        output[f"{prefix}_rejection_rate"] = (
+            len(rejected) / total if total else ""
+        )
+
+        output[f"{prefix}_offered_deadline_tasks"] = len(offered_deadline)
+        output[f"{prefix}_deadline_successes"] = len(successes)
+        output[f"{prefix}_deadline_goodput"] = (
+            len(successes) / len(offered_deadline)
+            if offered_deadline else ""
+        )
+
+        output[f"{prefix}_accepted_deadline_tasks"] = len(accepted_deadline)
+        output[f"{prefix}_accepted_deadline_misses"] = accepted_misses
+        output[f"{prefix}_accepted_miss_rate"] = (
+            accepted_misses / len(accepted_deadline)
+            if accepted_deadline else ""
+        )
+
+        output[f"{prefix}_p50_response_ms"] = value_or_blank(
+            percentile(responses_ms, 0.50)
+        )
+        output[f"{prefix}_p95_response_ms"] = value_or_blank(
+            percentile(responses_ms, 0.95)
+        )
+
+    return output
 
 def summarize_file(path: Path) -> dict:
     with path.open(newline="", encoding="utf-8") as handle:
@@ -101,7 +228,8 @@ def summarize_file(path: Path) -> dict:
     core_stats = scheduler_stats.get("core") if isinstance(scheduler_stats.get("core"), dict) else {}
     cpus = int(run_input.get("cpus") or 1)
     experiment = rows[0].get("experiment", "")
-    scheduler = rows[0].get("scheduler", "")
+    scheduler_impl = rows[0].get("scheduler", "")
+    scheduler = find_requested_method(path) or scheduler_impl
     repetition = int(rows[0].get("repetition") or 0)
 
     total = len(rows)
@@ -117,11 +245,24 @@ def summarize_file(path: Path) -> dict:
     failed = [
         r for r in admitted if parse_int(r.get("exit_code")) not in (None, 0)
     ]
+    offered_deadline = [
+        r for r in rows
+        if parse_int(r.get("absolute_deadline_ns")) is not None
+    ]
+    accepted_deadline = [
+        r for r in admitted
+        if parse_int(r.get("absolute_deadline_ns")) is not None
+    ]
     deadline_completed = [
         r for r in completed if parse_int(r.get("absolute_deadline_ns")) is not None
     ]
     missed = [r for r in deadline_completed if parse_bool(r.get("deadline_missed")) is True]
     timely = [r for r in deadline_completed if parse_bool(r.get("deadline_missed")) is False]
+
+    deadline_successes = len(timely)
+    accepted_deadline_misses = (
+        len(accepted_deadline) - deadline_successes
+    )
 
     releases = [parse_int(r.get("release_time_ns")) for r in rows]
     completions = [parse_int(r.get("completion_time_ns")) for r in completed]
@@ -201,11 +342,27 @@ def summarize_file(path: Path) -> dict:
         else None
     )
 
+    class_metrics = summarize_workload_classes(rows)
+    workload_pressure = read_workload_pressure(path)
+    psi_some = workload_pressure.get("some", {})
+    psi_some_avg10 = psi_some.get("avg10")
+    psi_some_total_us = (
+        int(psi_some["total"])
+        if "total" in psi_some
+        else None
+    )
+    psi_some_stall_fraction = (
+        psi_some_total_us / (duration_s * 1e6)
+        if psi_some_total_us is not None and duration_s > 0
+        else None
+    )
+
     return {
         "source_csv": str(path),
         "experiment": experiment,
         "repetition": repetition,
         "scheduler": scheduler,
+        "scheduler_impl": scheduler_impl,
         "cpus": cpus,
         "total_tasks": total,
         "admitted_tasks": len(admitted),
@@ -214,7 +371,21 @@ def summarize_file(path: Path) -> dict:
         "completed_tasks": len(completed),
         "failed_tasks": len(failed),
         "deadline_completed_tasks": len(deadline_completed),
+        "offered_deadline_tasks": len(offered_deadline),
+        "deadline_successes": deadline_successes,
+        "accepted_deadline_tasks": len(accepted_deadline),
+        "accepted_deadline_misses": accepted_deadline_misses,
         "deadline_misses": len(missed),
+        "deadline_goodput": (
+            deadline_successes / len(offered_deadline)
+            if offered_deadline
+            else ""
+        ),
+        "accepted_miss_rate": (
+            accepted_deadline_misses / len(accepted_deadline)
+            if accepted_deadline
+            else ""
+        ),
         "admission_rate": len(admitted) / total if total else 0.0,
         "delay_rate": len(delayed) / total if total else 0.0,
         "rejection_rate": len(rejected) / total if total else 0.0,
@@ -223,11 +394,18 @@ def summarize_file(path: Path) -> dict:
         if deadline_completed
         else "",
         "mean_response_ms": statistics.fmean(responses_ms) if responses_ms else "",
+        "p50_response_ms": value_or_blank(percentile(responses_ms, 0.50)),
         "p95_response_ms": value_or_blank(percentile(responses_ms, 0.95)),
         "throughput_tasks_s": len(completed) / duration_s,
         "goodput_deadline_tasks_s": len(timely) / duration_s,
         "cpu_utilization": cpu_utilization,
         "jain_class_service_fairness": value_or_blank(jain(service_ratios)),
+        "workload_psi_some_avg10_final": value_or_blank(psi_some_avg10),
+        "workload_psi_some_total_us": value_or_blank(psi_some_total_us),
+        "workload_psi_some_stall_fraction": value_or_blank(
+            psi_some_stall_fraction
+        ),
+        **class_metrics,
         "duration_s": duration_s,
         "scheduler_cpu_time_ms": value_or_blank(
             scheduler_cpu_time_ns / 1e6 if scheduler_cpu_time_ns is not None else None
@@ -262,11 +440,25 @@ def summarize_file(path: Path) -> dict:
 def mean_ci95(values: list[float]) -> tuple[float | str, float | str]:
     if not values:
         return "", ""
+
     mean = statistics.fmean(values)
     if len(values) < 2:
         return mean, ""
+
+    # Two-sided 95% Student-t critical values.
+    t95 = {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+    }
+
+    df = len(values) - 1
+    critical = t95.get(df, 1.96)
     sd = statistics.stdev(values)
-    return mean, 1.96 * sd / math.sqrt(len(values))
+    return mean, critical * sd / math.sqrt(len(values))
 
 
 def aggregate(rows: list[dict]) -> list[dict]:
@@ -277,6 +469,13 @@ def aggregate(rows: list[dict]) -> list[dict]:
     metrics = [
         "admission_rate",
         "rejection_rate",
+        "completion_rate",
+        "offered_deadline_tasks",
+        "deadline_successes",
+        "deadline_goodput",
+        "accepted_deadline_tasks",
+        "accepted_deadline_misses",
+        "accepted_miss_rate",
         "deadline_miss_ratio",
         "mean_response_ms",
         "p95_response_ms",
@@ -306,6 +505,30 @@ def aggregate(rows: list[dict]) -> list[dict]:
         "core_failed_dispatches",
         "core_congestion_events",
     ]
+
+    metrics.extend([
+        "p50_response_ms",
+        "workload_psi_some_avg10_final",
+        "workload_psi_some_total_us",
+        "workload_psi_some_stall_fraction",
+    ])
+
+    for workload_class in WORKLOAD_CLASSES:
+        metrics.extend([
+            f"{workload_class}_offered_tasks",
+            f"{workload_class}_completed_tasks",
+            f"{workload_class}_rejected_tasks",
+            f"{workload_class}_completion_rate",
+            f"{workload_class}_rejection_rate",
+            f"{workload_class}_offered_deadline_tasks",
+            f"{workload_class}_deadline_successes",
+            f"{workload_class}_deadline_goodput",
+            f"{workload_class}_accepted_deadline_tasks",
+            f"{workload_class}_accepted_deadline_misses",
+            f"{workload_class}_accepted_miss_rate",
+            f"{workload_class}_p50_response_ms",
+            f"{workload_class}_p95_response_ms",
+        ])
     output: list[dict] = []
     for (experiment, scheduler), items in sorted(groups.items()):
         row: dict[str, object] = {

@@ -97,3 +97,38 @@ These are Development/Smoke validation results, not final thesis/paper benchmark
 
 Diagnostic and pilot measurements at this checkpoint are not final benchmark
 or publication results.
+
+## Paper pilot qualification and workload memory correction (2026-08-10)
+
+- The first sustained overload pilot exposed a host-level OOM confound rather
+  than a scheduler failure.
+- Synthetic workers retain their configured memory working set during the
+  memory phase. Large per-worker allocations combined with bursty concurrency
+  could therefore exhaust the 8 GiB experimental VM.
+- Mixed interactive working sets were bounded to 8 MiB and explicit
+  memory-oriented batch working sets to 16 MiB across the sustained paper
+  profiles.
+- Task counts, release patterns, burst structure, runtimes, deadlines,
+  priorities, scheduler parameters, and admission parameters were unchanged.
+- The corrected overload profile was revalidated with EEVDF, stock RustLand,
+  AFS without admission, and full AFS without a new OOM event.
+- Paper pilot v2 completed 36/36 structurally valid runs across three
+  workloads, four methods, and three repetitions.
+- Pilot v1 is diagnostic only and must not be mixed with final benchmark
+  measurements.
+- Pilot v2 performance values are qualification evidence only and are not
+  final publication claims or tuning inputs.
+
+## Paper metric freeze preparation (2026-08-10)
+
+- separated requested method identity from the underlying scheduler
+  implementation so `proposed` and `proposed-no-admission` aggregate
+  independently,
+- added offered deadline goodput, accepted miss rate, completion/rejection,
+  P50/P95 response time, per-class metrics, and workload-cgroup CPU PSI,
+- added aggregate regression coverage and two-sided Student-t 95% confidence
+  intervals,
+- froze repetition-level aggregation and prohibited pooling tasks across
+  repetitions,
+- kept pilot measurements qualification-only and outside final-paper
+  aggregation.

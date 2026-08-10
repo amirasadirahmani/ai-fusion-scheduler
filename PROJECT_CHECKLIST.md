@@ -177,14 +177,22 @@
 
 ### Before experimental freeze
 
-- [ ] freeze sustained light workload
-- [ ] freeze sustained saturated workload
-- [ ] freeze sustained overload workload
-- [ ] ensure traces are long enough for meaningful PSI avg10 behavior
-- [ ] run three-repetition pilot matrix
-- [ ] inspect scheduler overhead measurements
-- [ ] finalize paper metrics and aggregation
-- [ ] freeze experiment configuration
+- [x] freeze sustained light workload
+- [x] freeze sustained saturated workload
+- [x] freeze sustained overload workload
+- [x] ensure traces are long enough for meaningful PSI avg10 behavior
+- [x] run three-repetition pilot matrix
+- [x] inspect scheduler overhead measurements
+- [x] finalize paper metrics and aggregation
+- [x] freeze experiment configuration
+
+Pilot qualification note:
+
+- [x] identify host-level OOM confound in pilot v1
+- [x] bound sustained-profile memory working sets before freeze
+- [x] revalidate overload with all four primary methods
+- [x] complete paper-pilot-v2 with 36/36 valid runs
+- [x] keep pilot results separate from final publication measurements
 
 ### Final evaluation
 

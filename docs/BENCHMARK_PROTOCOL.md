@@ -160,3 +160,119 @@ Before final matrix execution:
 - analysis scripts are committed,
 - paper metrics are frozen,
 - pilot runs pass validation.
+
+## 13. Pilot qualification and bounded memory working sets
+
+Pilot runs are used to validate the experimental methodology and harness,
+not to generate final publication measurements.
+
+The first sustained overload pilot exposed a host-level memory exhaustion
+confound. Synthetic workers retain their configured memory allocation during
+the memory phase, so large per-worker working sets combined with bursty
+concurrency could trigger the global Linux OOM killer independently of the
+scheduler under test.
+
+Before experimental freeze, sustained workload memory working sets were
+bounded as follows:
+
+- mixed interactive task: 8 MiB per worker
+- memory-oriented batch task: 16 MiB per worker
+
+This correction did not change task counts, release patterns, burst sizes,
+runtimes, deadlines, priorities, scheduler parameters, or admission
+parameters.
+
+The corrected overload workload was validated across all four primary
+methods without a new OOM event.
+
+Paper pilot v2 then completed all 36 planned qualification runs with
+structural validation success.
+
+Pilot v1 measurements from before the memory correction are diagnostic only.
+Pilot v2 performance values are qualification evidence rather than final
+paper results.
+
+Scheduler or workload parameters must not be retuned from pilot v2
+performance outcomes before final evaluation.
+
+## 14. Frozen paper metric definitions and aggregation
+
+The following definitions are frozen before the final benchmark matrix.
+
+### Primary run-level metrics
+
+For every run:
+
+- `offered_deadline_tasks` is the number of offered tasks with an
+  `absolute_deadline_ns`, including tasks rejected by admission control.
+- `deadline_successes` is the number of offered deadline-bearing tasks that
+  complete successfully and on time.
+- `deadline_goodput = deadline_successes / offered_deadline_tasks`.
+  Rejected deadline-bearing tasks remain in the denominator and are not
+  successes.
+- `accepted_deadline_tasks` is the number of deadline-bearing tasks not
+  rejected by admission control.
+- `accepted_deadline_misses = accepted_deadline_tasks - deadline_successes`.
+  An accepted task that is late, fails, or does not complete successfully is
+  not credited as a deadline success.
+- `accepted_miss_rate =
+  accepted_deadline_misses / accepted_deadline_tasks`.
+- `rejection_rate = rejected_tasks / total_tasks`.
+- `completion_rate = completed_tasks / total_tasks`.
+
+`deadline_goodput` is the principal deadline metric because it measures useful
+deadline service against the offered workload and cannot be improved merely by
+rejecting difficult tasks. `accepted_miss_rate` is reported alongside it to
+show scheduling quality after admission.
+
+The same offered-load, admitted-load, completion, response-time, and deadline
+metrics are computed separately for `critical`, `interactive`, and `batch`
+tasks.
+
+### Secondary run-level metrics
+
+- P50 and P95 response time are computed over successfully completed tasks.
+- Throughput is successful completions divided by measured run duration.
+- Workload CPU utilization is workload CPU time normalized by configured
+  workload CPUs and measured run duration.
+- Jain class-service fairness is secondary and does not replace the
+  offered-load deadline metrics.
+- Workload CPU PSI is read from
+  `workload-cpu-pressure-final.txt`.
+- `workload_psi_some_avg10_final` is the final `some avg10` snapshot.
+- `workload_psi_some_total_us` is the cumulative cgroup-v2 `some total`.
+- `workload_psi_some_stall_fraction =
+  workload_psi_some_total_us / (duration_s * 1e6)`.
+- AFS internal overhead is reported from `scheduler-stats.json` as scheduler
+  CPU time/fraction and decision statistics when available. These counters
+  are not used as a direct cross-method overhead comparison with EEVDF or
+  stock RustLand.
+
+Analysis uses the requested method in `run-provenance.txt` as the experimental
+method identity and retains the underlying scheduler as `scheduler_impl`.
+Therefore `proposed` and `proposed-no-admission` remain separate methods.
+
+### Repetition-level aggregation
+
+The final primary matrix uses ten repetitions per workload/method combination.
+
+- A run/repetition is the unit of aggregation. Tasks from different
+  repetitions are not pooled as independent samples.
+- Metrics are computed per run first and then aggregated across repetitions.
+- Aggregates are reported as the arithmetic mean plus a two-sided 95%
+  Student-t confidence-interval half-width:
+  `t_(n-1,0.975) * s / sqrt(n)`.
+- For final `n = 10`, the implementation uses `df = 9` and `t = 2.262`.
+- Structurally inapplicable blank metrics are omitted from that metric's
+  aggregation rather than converted to zero.
+- Shared manifests preserve pairing across methods for the same
+  workload/repetition. Any cross-method delta must use repetition-matched
+  run-level differences, not pooled task samples.
+- Per-class metrics are also computed per run before aggregation.
+
+Pilot and diagnostic runs are excluded from final-paper aggregation and are
+not used for post-hoc workload or policy tuning.
+
+After this metric freeze, presentation code may change, but the raw metric
+definitions, repetition unit, and aggregation rules above must not change in
+response to final benchmark outcomes.
