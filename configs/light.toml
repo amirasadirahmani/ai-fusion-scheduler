@@ -65,7 +65,7 @@ runtime_ms = 560
 runtime_jitter_pct = 20.0
 deadline_ms = 3600
 priority = 0.70
-memory_mb = 64
+memory_mb = 8
 io_bytes = 2097152
 
 [[workloads]]
