@@ -182,3 +182,42 @@ GPL-2.0-only. The `scx_rustland_core` backend is also GPL-2.0-only.
 - اسلاید ارائه کامل: `presentation/ai_fusion_scheduler_presentation.pptx`
 
 توجه: نتایج `results/sample` واقعی نیستند و فقط برای بررسی ابزار تحلیل و نمودارها استفاده می شوند. نتایج نهایی پژوهش باید روی سیستم Linux 6.12.95 تولید و در `results/real` ذخیره شوند.
+
+## Paper-oriented benchmark checkpoint — 2026-08-10
+
+The project has reached the first paper-oriented benchmark-engineering
+checkpoint on branch `benchmark-engineering`.
+
+Checkpoint:
+
+- Git commit: `f7001bfd20c4007cdc9f082bffb26e4d360081e9`
+- Git tag: `checkpoint-paper-harness-v1`
+- Linux kernel: `7.1.3+deb13-arm64`
+- sched_ext enabled kernel
+- pinned scx revision:
+  `7a58a3a1a857fa748ea5a3bda5ad312afbbeca5b`
+
+The experimental harness now provides:
+
+- real CPU partitioning between application workload and control plane;
+- deterministic shared task manifests across compared schedulers;
+- corrected workload release-clock semantics;
+- workload-scoped cgroup-v2 CPU PSI for admission decisions;
+- pre-run quiescence checks;
+- deterministic sched_ext attach/detach lifecycle;
+- run provenance and binary/source revision recording;
+- automatic structural result validation.
+
+The current light and overload measurements are diagnostic/pilot evidence
+only and are not final publication results.
+
+Paper-oriented documentation:
+
+- `docs/BENCHMARK_PROTOCOL.md`
+- `docs/PAPER_PLAN.md`
+- `docs/PROPOSAL_METHODOLOGY_CHECKPOINT_FA.md`
+- `presentation/SLIDE_UPDATE_NOTES.md`
+
+The next experimental phase is to freeze sustained light, saturated, and
+overload workload definitions and perform repeated pilot evaluation before
+the final benchmark matrix.

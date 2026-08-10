@@ -203,3 +203,42 @@ sudo ./scripts/run_smoke_test.sh
 python analysis/analyze_results.py results/**/tasks.csv --out results/summary
 python analysis/plot_results.py results/summary/aggregate-summary.csv --out-dir results/summary/plots
 ```
+
+## چک‌پوینت روش‌شناسی ارزیابی مقاله — ۱۴۰۵/۰۵/۱۹
+
+در این مرحله، نتایج موجود صرفاً نتایج تشخیصی و پایلوت هستند و به‌عنوان
+نتایج نهایی گزارش تلقی نمی‌شوند.
+
+زیرساخت ارزیابی پروژه پیش از اجرای آزمایش‌های نهایی شامل موارد زیر تثبیت
+شده است:
+
+- جداسازی CPUهای بارکاری از CPUهای control plane؛
+- اعمال واقعی محدودیت CPU بر workerها؛
+- استفاده از manifest مشترک برای مقایسه منصفانه زمان‌بندها؛
+- اصلاح مبدأ زمانی release بارکاری؛
+- جداسازی فشار CPU بارکاری با استفاده از cgroup v2 و `cpu.pressure`؛
+- جداسازی فشار بارکاری از فشار ناشی از userspace sched_ext scheduler؛
+- اعتبارسنجی خودکار هر run؛
+- ثبت provenance شامل kernel، revisionهای Git، hash باینری‌ها و CPU
+  partition؛
+- پاک‌سازی و بررسی وضعیت sched_ext قبل و بعد از هر آزمایش.
+
+روش‌های اصلی مقایسه در ارزیابی مقاله عبارت خواهند بود از:
+
+1. Linux EEVDF؛
+2. Stock scx_rustland؛
+3. AFS بدون admission control؛
+4. AFS کامل همراه با application-aware admission control.
+
+برای جلوگیری از نتیجه‌گیری گمراه‌کننده ناشی از rejection، معیار اصلی تنها
+deadline miss میان taskهای پذیرفته‌شده نخواهد بود. تعداد taskهای دارای
+deadline که نسبت به کل offered load پیش از deadline تکمیل شده‌اند
+(deadline goodput)، نرخ پذیرش/رد، completion rate، latency، throughput،
+utilization، fairness و scheduler overhead نیز گزارش خواهند شد.
+
+پروتکل تفصیلی آزمایش‌ها در فایل زیر نگهداری می‌شود:
+
+`docs/BENCHMARK_PROTOCOL.md`
+
+تا پیش از freeze شدن workloadها و اجرای آزمایش‌های تکرارشونده، این بخش
+نباید شامل ادعای نهایی درباره برتری روش پیشنهادی باشد.

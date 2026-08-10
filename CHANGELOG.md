@@ -74,3 +74,26 @@ deadline_missed = false
 
 These are Development/Smoke validation results, not final thesis/paper benchmark results.
 <!-- CHECKPOINT-2026-08-09:END -->
+
+## Paper benchmark harness checkpoint (2026-08-10)
+
+- Added enforced workload/control-plane CPU partitioning.
+- Added workload CPU affinity.
+- Hardened sched_ext scheduler lifecycle and cleanup.
+- Added pre-run CPU-pressure quiescence checking.
+- Added shared manifests for identical scheduler comparisons.
+- Added deterministic randomized benchmark execution ordering.
+- Added automatic structural run validation.
+- Extended provenance with kernel, source revisions, CPU partition and binary
+  hashes.
+- Corrected workload release-clock placement so initialization I/O does not
+  consume application deadline budget.
+- Added workload-scoped cgroup-v2 CPU PSI.
+- Removed system-wide CPU PSI from application admission decisions.
+- Added admission deadline-slack handling and relevant-interference
+  accounting.
+- Validated the revised harness using smoke, light, idle-PSI, and overload
+  diagnostic experiments.
+
+Diagnostic and pilot measurements at this checkpoint are not final benchmark
+or publication results.

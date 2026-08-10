@@ -154,3 +154,56 @@
 - [ ] Persian spoken script
 - [ ] clean screen recording
 <!-- CHECKPOINT-2026-08-09:END -->
+
+## Paper-oriented experimental checkpoint — 2026-08-10
+
+### Completed
+
+- [x] sched_ext-capable kernel installed and validated
+- [x] pinned scx revision
+- [x] stock RustLand baseline builds and attaches
+- [x] proposed Rust AFS scheduler attaches and detaches
+- [x] real workload/control-plane CPU partitioning
+- [x] deterministic shared manifests
+- [x] corrected benchmark release clock
+- [x] workload-scoped cgroup-v2 CPU PSI
+- [x] automatic run validation
+- [x] benchmark provenance
+- [x] admission-v3 engineering diagnostics
+- [x] light scoped-PSI sanity run
+- [x] overload admission/no-admission diagnostic A/B
+- [x] paper benchmark protocol draft
+- [x] paper plan draft
+
+### Before experimental freeze
+
+- [ ] freeze sustained light workload
+- [ ] freeze sustained saturated workload
+- [ ] freeze sustained overload workload
+- [ ] ensure traces are long enough for meaningful PSI avg10 behavior
+- [ ] run three-repetition pilot matrix
+- [ ] inspect scheduler overhead measurements
+- [ ] finalize paper metrics and aggregation
+- [ ] freeze experiment configuration
+
+### Final evaluation
+
+- [ ] EEVDF baseline
+- [ ] stock RustLand baseline
+- [ ] AFS without admission
+- [ ] full AFS
+- [ ] no-aging ablation
+- [ ] no-application-deadline ablation
+- [ ] periodic/sporadic SCHED_DEADLINE comparison
+- [ ] fusion case study
+- [ ] ten repetitions of the final benchmark matrix
+- [ ] statistical aggregation and plots
+
+### Publication and presentation
+
+- [ ] final results section
+- [ ] final proposal refresh
+- [ ] final report
+- [ ] final PowerPoint results slides
+- [ ] professor demonstration recording
+- [ ] conference-paper draft

@@ -134,3 +134,35 @@ amir ALL=(ALL:ALL) NOPASSWD: ALL
 
 قبل از benchmark نهایی، `scripts/capture_reproducibility_checkpoint.sh` اجرا و خروجی نگهداری شود.
 <!-- CHECKPOINT-2026-08-09:END -->
+
+## Paper benchmark environment checkpoint — 2026-08-10
+
+The paper-oriented benchmark harness is currently validated on the following
+development environment:
+
+- Host: Apple Silicon MacBook Pro / UTM virtual machine
+- Guest: Debian 13
+- Architecture: AArch64
+- Kernel: `7.1.3+deb13-arm64`
+- sched_ext: enabled in the kernel
+- Available VM CPUs: 6
+- Paper harness workload CPUs for 4-CPU profiles: `2,3,4,5`
+- Control-plane CPUs: `0,1`
+- cgroup hierarchy: cgroup v2
+- workload CPU pressure source: per-run `afs-workload/cpu.pressure`
+
+The proposed scheduler and stock RustLand userspace control plane are kept
+outside the workload-pressure cgroup. Application worker processes are moved
+into the delegated workload cgroup before execution begins.
+
+The system-wide `/proc/pressure/cpu` signal is retained for environment
+quiescence/provenance but is not used as the application admission-pressure
+signal.
+
+Pinned scx revision:
+
+`7a58a3a1a857fa748ea5a3bda5ad312afbbeca5b`
+
+Paper harness checkpoint:
+
+`checkpoint-paper-harness-v1`
