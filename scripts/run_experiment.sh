@@ -89,6 +89,8 @@ trap cleanup EXIT INT TERM
 
 assert_sched_ext_disabled
 
+NO_ADMISSION=0
+
 case "$METHOD" in
     eevdf)
         ;;
@@ -97,6 +99,16 @@ case "$METHOD" in
         ;;
     proposed)
         start_proposed_scheduler "$CONFIG" "$OUTPUT"
+        ;;
+    proposed-no-admission|proposed_no_admission)
+        # Matrix-visible experimental variant:
+        # run the same AFS scheduler while disabling only admission control.
+        #
+        # Keep METHOD=proposed for the generator, result schema, and validator,
+        # while run-provenance (written above) retains the requested variant.
+        start_proposed_scheduler "$CONFIG" "$OUTPUT"
+        METHOD=proposed
+        NO_ADMISSION=1
         ;;
     sched-deadline|sched_deadline)
         require_root_for_scheduler
@@ -124,6 +136,10 @@ GEN_ARGS=(
 
 if [[ -n "$MANIFEST" ]]; then
     GEN_ARGS+=(--manifest "$MANIFEST")
+fi
+
+if [[ "$NO_ADMISSION" == "1" ]]; then
+    GEN_ARGS+=(--no-admission)
 fi
 
 set +e

@@ -6,7 +6,7 @@ source "$ROOT/scripts/lib.sh"
 
 OUT_ROOT=${1:-$ROOT/results/matrix}
 REPETITIONS=${REPETITIONS:-10}
-METHODS=${METHODS:-"eevdf rustland proposed"}
+METHODS=${METHODS:-"eevdf rustland proposed-no-admission proposed"}
 CONFIGS=${CONFIGS:-"light saturated overload"}
 ORDER_SEED=${ORDER_SEED:-104729}
 COOLDOWN_S=${AFS_COOLDOWN_S:-2}
