@@ -196,15 +196,15 @@ Pilot qualification note:
 
 ### Final evaluation
 
-- [ ] EEVDF baseline
-- [ ] stock RustLand baseline
-- [ ] AFS without admission
-- [ ] full AFS
+- [x] EEVDF baseline
+- [x] stock RustLand baseline
+- [x] AFS without admission
+- [x] full AFS
 - [ ] no-aging ablation
 - [ ] no-application-deadline ablation
 - [ ] periodic/sporadic SCHED_DEADLINE comparison
 - [ ] fusion case study
-- [ ] ten repetitions of the final benchmark matrix
+- [x] ten repetitions of the final benchmark matrix
 - [ ] statistical aggregation and plots
 
 ### Publication and presentation

@@ -137,3 +137,15 @@ A repetition is the statistical unit. Per-run metrics are aggregated with a
 two-sided 95% Student-t confidence interval and tasks are not pooled across
 repetitions. Shared manifests preserve method pairing. Pilot results remain
 qualification-only and are excluded from final-paper aggregation.
+
+### Preserve the experimental freeze and continue post-results work on a new branch
+
+The final primary matrix was executed from `experimental-freeze-v1` at commit
+`edcd8eb347f998fc68c705ca770eaa645c8e78be`. The `benchmark-engineering`
+branch and freeze tag are preserved as the experimental reference point.
+
+Post-results analysis, documentation, proposal/report updates, presentation
+work, and remaining secondary evaluations continue on the
+`paper-finalization` branch. The tracked `docs/final-results/` snapshot records
+the validated 120-run primary matrix without adding the ignored raw `results/`
+tree to Git.

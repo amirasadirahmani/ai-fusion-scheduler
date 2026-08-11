@@ -132,3 +132,15 @@ or publication results.
   repetitions,
 - kept pilot measurements qualification-only and outside final-paper
   aggregation.
+
+## Final primary matrix completed (2026-08-11)
+
+- completed the frozen 3-workload x 4-method x 10-repetition primary matrix,
+- validated 120/120 runs with no validation failures,
+- verified 30 shared manifests and all 120 run-to-manifest hashes,
+- confirmed no kernel OOM events during the final matrix window,
+- produced final per-run and aggregate analysis with ten repetitions per
+  workload/method group,
+- preserved a tracked publication-facing snapshot under `docs/final-results/`,
+- moved post-results documentation and remaining evaluation work to the
+  `paper-finalization` branch while preserving `experimental-freeze-v1`.
