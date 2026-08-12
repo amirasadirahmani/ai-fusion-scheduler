@@ -27,7 +27,7 @@
 - [ ] unmodified `scx_rustland` runs complete
 - [ ] proposed method runs complete
 - [ ] selected ablations complete
-- [ ] fusion case study complete
+- [x] fusion case study complete
 - [ ] at least 10 final repetitions per required method/scenario
 - [ ] method order randomized
 - [ ] thermal/governor/background-service conditions recorded
@@ -200,16 +200,16 @@ Pilot qualification note:
 - [x] stock RustLand baseline
 - [x] AFS without admission
 - [x] full AFS
-- [ ] no-aging ablation
-- [ ] no-application-deadline ablation
-- [ ] periodic/sporadic SCHED_DEADLINE comparison
-- [ ] fusion case study
+- [x] no-aging ablation
+- [x] no-application-deadline ablation
+- [x] periodic/sporadic SCHED_DEADLINE comparison
+- [x] fusion case study
 - [x] ten repetitions of the final benchmark matrix
-- [ ] statistical aggregation and plots
+- [x] statistical aggregation and plots
 
 ### Publication and presentation
 
-- [ ] final results section
+- [x] final results section
 - [ ] final proposal refresh
 - [ ] final report
 - [ ] final PowerPoint results slides

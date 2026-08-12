@@ -94,3 +94,29 @@ AFS-internal scheduler overhead are secondary metrics.
 
 The three-repetition pilot remains qualification evidence only; it is excluded
 from final-paper aggregates and is not used for post-hoc tuning.
+
+<!-- FINAL-RESULTS-SECTION-V1:BEGIN -->
+## Final evaluation evidence
+
+The final evaluation is complete and the publication-facing results are
+maintained in [`FINAL_RESULTS_SECTION.md`](FINAL_RESULTS_SECTION.md).
+
+- Primary matrix: 120/120 validated runs, three workloads × four methods × ten
+  repetitions.
+- Secondary measured matrix: 70 measured runs plus ten periodic manifest-seed
+  runs; 80/80 standard secondary validations passed.
+- Fusion case study: complete.
+- Publication plots: complete and tracked under `docs/secondary-results/plots/`.
+- Primary interpretation: light is a floor/tie regime; at saturation full AFS
+  approximately matches RustLand deadline goodput while reducing accepted
+  misses, tail latency, and workload pressure at the cost of rejection; under
+  overload the result is explicitly an admission/load-shedding trade-off.
+- Ablations: application-deadline awareness has a large effect under
+  saturation/overload; aging is most useful in the hardest overload regime.
+- Periodic/sporadic comparison is scoped to the frozen synthetic workload, and
+  the fusion result is treated as a case study rather than a population
+  estimate.
+
+Pilot evidence above remains qualification-only and is superseded by the
+tracked final primary and secondary snapshots for publication claims.
+<!-- FINAL-RESULTS-SECTION-V1:END -->
