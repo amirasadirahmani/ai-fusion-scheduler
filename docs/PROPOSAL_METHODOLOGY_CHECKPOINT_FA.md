@@ -87,3 +87,20 @@ Deadline Goodput = تعداد taskهای deadlineدار که قبل از deadlin
 4. freeze کد و config
 5. اجرای benchmark نهایی و استخراج نمودارها
 6. آماده سازی گزارش، ارائه، فیلم استاد و مقاله کنفرانسی
+
+<!-- FINAL-PROPOSAL-REFRESH-V1:BEGIN -->
+## بازنگری نهایی پروپوزال - 2026-08-12
+
+نسخه نهایی پروپوزال پس از تکمیل primary و secondary evaluation بازنگری شد.
+منبع قابل ویرایش در `docs/FINAL_PROPOSAL_REFRESH_FA.md` و نسخه PDF در
+`docs/final-proposal-fa.pdf` نگهداری می‌شود.
+
+این refresh بر مبنای snapshotهای نهایی `docs/final-results/` و
+`docs/secondary-results/` و Results section نهایی انجام شده است. تفسیر نتایج
+همان guardrailهای frozen را حفظ می‌کند: بار Light به‌عنوان tie/floor،
+Saturated بدون ادعای برتری آماری قطعی goodput نسبت به RustLand، Overload
+به‌عنوان admission/load-shedding trade-off، و محدود کردن نتیجه
+SCHED_DEADLINE و Fusion به workload/case-study مربوطه.
+
+Results documentation commit: `b39c84d044bf4d942bcb0e64f0b6a6ae4b7a4972`.
+<!-- FINAL-PROPOSAL-REFRESH-V1:END -->

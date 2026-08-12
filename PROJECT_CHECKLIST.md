@@ -210,7 +210,7 @@ Pilot qualification note:
 ### Publication and presentation
 
 - [x] final results section
-- [ ] final proposal refresh
+- [x] final proposal refresh
 - [ ] final report
 - [ ] final PowerPoint results slides
 - [ ] professor demonstration recording
