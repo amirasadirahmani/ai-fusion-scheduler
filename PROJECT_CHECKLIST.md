@@ -211,7 +211,7 @@ Pilot qualification note:
 
 - [x] final results section
 - [x] final proposal refresh
-- [ ] final report
+- [x] final report
 - [ ] final PowerPoint results slides
 - [ ] professor demonstration recording
 - [ ] conference-paper draft
