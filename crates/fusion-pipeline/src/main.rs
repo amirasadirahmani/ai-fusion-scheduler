@@ -33,7 +33,10 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let cfg = ExperimentConfig::from_path(&args.config)?;
     if cfg.pipeline.is_none() {
-        bail!("{} does not contain a [pipeline] section", args.config.display());
+        bail!(
+            "{} does not contain a [pipeline] section",
+            args.config.display()
+        );
     }
     let method = SchedulerMethod::from_str(&args.method).map_err(anyhow::Error::msg)?;
     fs::create_dir_all(&args.output_dir)?;
@@ -71,7 +74,9 @@ fn main() -> Result<()> {
         command.arg("--dry-run");
     }
 
-    let status = command.status().context("failed to execute workload generator")?;
+    let status = command
+        .status()
+        .context("failed to execute workload generator")?;
     if !status.success() {
         bail!("workload generator failed with {status}");
     }
@@ -102,6 +107,8 @@ fn write_pipeline_description(
 
 fn resolve_sibling_binary(name: &str) -> Result<PathBuf> {
     let current = std::env::current_exe()?;
-    let parent = current.parent().context("current executable has no parent")?;
+    let parent = current
+        .parent()
+        .context("current executable has no parent")?;
     Ok(parent.join(name))
 }

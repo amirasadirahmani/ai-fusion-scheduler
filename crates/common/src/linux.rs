@@ -125,12 +125,12 @@ pub fn signal(pid: i32, sig: i32) -> io::Result<()> {
 pub fn proc_process_cpu_time_ns(pid: i32) -> io::Result<u64> {
     let text = fs::read_to_string(format!("/proc/{pid}/stat"))?;
     // comm is parenthesized and may contain spaces; split after the final ')'.
-    let close = text.rfind(')').ok_or_else(|| {
-        io::Error::new(io::ErrorKind::InvalidData, "invalid /proc stat format")
-    })?;
-    let rest = text.get(close + 2..).ok_or_else(|| {
-        io::Error::new(io::ErrorKind::InvalidData, "invalid /proc stat fields")
-    })?;
+    let close = text
+        .rfind(')')
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "invalid /proc stat format"))?;
+    let rest = text
+        .get(close + 2..)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "invalid /proc stat fields"))?;
     // Fields after comm start at field 3. utime=14 and stime=15 => indexes 11 and 12.
     let fields: Vec<&str> = rest.split_whitespace().collect();
     if fields.len() <= 12 {
@@ -149,9 +149,7 @@ pub fn proc_process_cpu_time_ns(pid: i32) -> io::Result<u64> {
     if ticks <= 0 {
         return Err(io::Error::last_os_error());
     }
-    Ok((utime.saturating_add(stime))
-        .saturating_mul(1_000_000_000)
-        / ticks as u64)
+    Ok((utime.saturating_add(stime)).saturating_mul(1_000_000_000) / ticks as u64)
 }
 
 pub fn sched_ext_state() -> io::Result<String> {

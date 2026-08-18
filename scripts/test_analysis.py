@@ -35,7 +35,7 @@ def main() -> int:
              1_000_000_000, 1_020_000_000, 1_300_000_000, 1_250_000_000,
              200_000_000, 180_000_000, 300_000_000, "true", 0, ""],
             ["smoke", 0, "proposed", 3, -1, 0, 0, "t3", "batch", "cpu", "reject", 0,
-             1_000_000_000, "", "", "", 100_000_000, "", "", "", "", "overload"],
+             1_000_000_000, "", "", 1_150_000_000, 100_000_000, "", "", "", "", "overload"],
         ]
         with (run / "tasks.csv").open("w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)
@@ -62,13 +62,64 @@ def main() -> int:
             }),
             encoding="utf-8",
         )
+        (run / "run-provenance.txt").write_text(
+            "method=proposed-no-admission\n",
+            encoding="utf-8",
+        )
+        (run / "workload-cpu-pressure-final.txt").write_text(
+            "some avg10=12.50 avg60=5.00 avg300=1.00 total=100000\n"
+            "full avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+            encoding="utf-8",
+        )
+
         summary = module.summarize_file(run / "tasks.csv")
+        assert summary["scheduler"] == "proposed-no-admission"
+        assert summary["scheduler_impl"] == "proposed"
+        assert summary["offered_deadline_tasks"] == 3
+        assert summary["deadline_successes"] == 1
+        assert summary["deadline_goodput"] == 1 / 3
+        assert summary["accepted_deadline_tasks"] == 2
+        assert summary["accepted_deadline_misses"] == 1
+        assert summary["accepted_miss_rate"] == 0.5
+        assert summary["p50_response_ms"] == 200.0
+        assert summary["workload_psi_some_avg10_final"] == 12.5
+        assert summary["workload_psi_some_total_us"] == 100000
+        assert summary["workload_psi_some_stall_fraction"] == 0.2
+
+        assert summary["critical_offered_tasks"] == 1
+        assert summary["critical_deadline_goodput"] == 1.0
+        assert summary["critical_accepted_miss_rate"] == 0.0
+        assert summary["critical_p50_response_ms"] == 100.0
+
+        assert summary["interactive_offered_tasks"] == 1
+        assert summary["interactive_deadline_goodput"] == 0.0
+        assert summary["interactive_accepted_miss_rate"] == 1.0
+        assert summary["interactive_p50_response_ms"] == 300.0
+
+        assert summary["batch_offered_tasks"] == 1
+        assert summary["batch_rejection_rate"] == 1.0
+        assert summary["batch_deadline_goodput"] == 0.0
+        assert summary["batch_accepted_deadline_tasks"] == 0
+        assert summary["batch_accepted_miss_rate"] == ""
+
         assert summary["deadline_miss_ratio"] == 0.5
         assert summary["p95_response_ms"] == 290.0
         assert summary["admission_rate"] == 2 / 3
         assert summary["average_tasks_per_notify_cycle"] == 3.0
         assert summary["average_decision_wall_us"] == 100.0
         assert summary["core_failed_dispatches"] == 1
+        agg = module.aggregate([summary])
+        assert len(agg) == 1
+        assert agg[0]["scheduler"] == "proposed-no-admission"
+        assert agg[0]["runs"] == 1
+        assert agg[0]["deadline_goodput_mean"] == 1 / 3
+        assert agg[0]["p50_response_ms_mean"] == 200.0
+        assert agg[0]["workload_psi_some_stall_fraction_mean"] == 0.2
+        assert agg[0]["critical_deadline_goodput_mean"] == 1.0
+        assert agg[0]["interactive_deadline_goodput_mean"] == 0.0
+        assert agg[0]["batch_rejection_rate_mean"] == 1.0
+        assert agg[0]["accepted_miss_rate_mean"] == 0.5
+
     print("analysis self-test passed")
     return 0
 

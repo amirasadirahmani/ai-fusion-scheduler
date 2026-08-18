@@ -77,6 +77,30 @@ pub fn decide_admission(
     }
 
     if psi >= cfg.psi_delay_threshold && task.workload_class != WorkloadClass::Critical {
+        let delay_step_ns = cfg.delay_step_ms.saturating_mul(1_000_000);
+
+        // Deadline-aware deferral:
+        //
+        // Do not deliberately delay a task that is feasible now if the next
+        // admission delay step would consume the remaining deadline slack and
+        // make that same task infeasible under the current prediction.
+        //
+        // Under severe PSI the earlier cpu_pressure_reject branch still wins.
+        if delay_step_ns > 0 {
+            if let Some(deadline) = task.absolute_deadline_ns {
+                let predicted_after_delay = predicted_finish_ns.saturating_add(delay_step_ns);
+
+                if predicted_after_delay > deadline {
+                    return AdmissionOutcome {
+                        decision: AdmissionDecision::Admit,
+                        predicted_finish_ns,
+                        available_until_deadline_ns: available,
+                        reason: "deadline_slack_exhausted_admit",
+                    };
+                }
+            }
+        }
+
         return AdmissionOutcome {
             decision: AdmissionDecision::Delay,
             predicted_finish_ns,
@@ -170,5 +194,73 @@ mod tests {
         );
 
         assert_eq!(out.decision, AdmissionDecision::Reject);
+    }
+
+    #[test]
+    fn pressure_delay_admits_when_next_step_would_exhaust_deadline_slack() {
+        let mut t = task(Some(100_000_000));
+        t.estimated_total_runtime_ns = 70_000_000;
+        t.estimated_remaining_runtime_ns = 70_000_000;
+
+        let mut cfg = AdmissionConfig::default();
+        cfg.enabled = true;
+        cfg.safety_factor = 1.20;
+        cfg.psi_delay_threshold = 20.0;
+        cfg.psi_reject_threshold = 60.0;
+        cfg.delay_step_ms = 25;
+
+        let out = decide_admission(
+            &t,
+            0,
+            AdmissionState {
+                pressure: CpuPressure {
+                    some: crate::PsiLine {
+                        avg10: 30.0,
+                        ..Default::default()
+                    },
+                    full: None,
+                },
+                cpus: 4,
+                ..AdmissionState::default()
+            },
+            &cfg,
+        );
+
+        assert_eq!(out.decision, AdmissionDecision::Admit);
+        assert_eq!(out.reason, "deadline_slack_exhausted_admit");
+    }
+
+    #[test]
+    fn pressure_delay_continues_when_deadline_has_sufficient_slack() {
+        let mut t = task(Some(150_000_000));
+        t.estimated_total_runtime_ns = 70_000_000;
+        t.estimated_remaining_runtime_ns = 70_000_000;
+
+        let mut cfg = AdmissionConfig::default();
+        cfg.enabled = true;
+        cfg.safety_factor = 1.20;
+        cfg.psi_delay_threshold = 20.0;
+        cfg.psi_reject_threshold = 60.0;
+        cfg.delay_step_ms = 25;
+
+        let out = decide_admission(
+            &t,
+            0,
+            AdmissionState {
+                pressure: CpuPressure {
+                    some: crate::PsiLine {
+                        avg10: 30.0,
+                        ..Default::default()
+                    },
+                    full: None,
+                },
+                cpus: 4,
+                ..AdmissionState::default()
+            },
+            &cfg,
+        );
+
+        assert_eq!(out.decision, AdmissionDecision::Delay);
+        assert_eq!(out.reason, "cpu_pressure_delay");
     }
 }

@@ -27,7 +27,7 @@
 - [ ] unmodified `scx_rustland` runs complete
 - [ ] proposed method runs complete
 - [ ] selected ablations complete
-- [ ] fusion case study complete
+- [x] fusion case study complete
 - [ ] at least 10 final repetitions per required method/scenario
 - [ ] method order randomized
 - [ ] thermal/governor/background-service conditions recorded
@@ -154,3 +154,64 @@
 - [ ] Persian spoken script
 - [ ] clean screen recording
 <!-- CHECKPOINT-2026-08-09:END -->
+
+## Paper-oriented experimental checkpoint — 2026-08-10
+
+### Completed
+
+- [x] sched_ext-capable kernel installed and validated
+- [x] pinned scx revision
+- [x] stock RustLand baseline builds and attaches
+- [x] proposed Rust AFS scheduler attaches and detaches
+- [x] real workload/control-plane CPU partitioning
+- [x] deterministic shared manifests
+- [x] corrected benchmark release clock
+- [x] workload-scoped cgroup-v2 CPU PSI
+- [x] automatic run validation
+- [x] benchmark provenance
+- [x] admission-v3 engineering diagnostics
+- [x] light scoped-PSI sanity run
+- [x] overload admission/no-admission diagnostic A/B
+- [x] paper benchmark protocol draft
+- [x] paper plan draft
+
+### Before experimental freeze
+
+- [x] freeze sustained light workload
+- [x] freeze sustained saturated workload
+- [x] freeze sustained overload workload
+- [x] ensure traces are long enough for meaningful PSI avg10 behavior
+- [x] run three-repetition pilot matrix
+- [x] inspect scheduler overhead measurements
+- [x] finalize paper metrics and aggregation
+- [x] freeze experiment configuration
+
+Pilot qualification note:
+
+- [x] identify host-level OOM confound in pilot v1
+- [x] bound sustained-profile memory working sets before freeze
+- [x] revalidate overload with all four primary methods
+- [x] complete paper-pilot-v2 with 36/36 valid runs
+- [x] keep pilot results separate from final publication measurements
+
+### Final evaluation
+
+- [x] EEVDF baseline
+- [x] stock RustLand baseline
+- [x] AFS without admission
+- [x] full AFS
+- [x] no-aging ablation
+- [x] no-application-deadline ablation
+- [x] periodic/sporadic SCHED_DEADLINE comparison
+- [x] fusion case study
+- [x] ten repetitions of the final benchmark matrix
+- [x] statistical aggregation and plots
+
+### Publication and presentation
+
+- [x] final results section
+- [x] final proposal refresh
+- [x] final report
+- [x] final PowerPoint results slides
+- [ ] professor demonstration recording
+- [ ] conference-paper draft

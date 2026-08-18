@@ -1,20 +1,31 @@
+# Paper pilot v1.
+# Count-driven finite burst trace.
+# Temporal parameters are dilated approximately 8x from the engineering
+# diagnostic profile. Burst counts are increased so
+# that the mixed overload phase remains active for roughly 30 seconds.
+#
+# For bursty arrivals the generator currently inserts 0.5 ms between tasks
+# inside a burst and interarrival_ms between burst boundaries.
+#
+# duration_s is currently legacy metadata and does not terminate the trace.
+
 [experiment]
 name = "overload-bursty"
 seed = 104729
 scheduler = "proposed"
 cpus = 4
 repetitions = 10
-duration_s = 90
-warmup_s = 5
+duration_s = 0
+warmup_s = 0
 registry_dir = "/tmp/ai-fusion-scheduler/registry"
 output_dir = "results/overload"
 max_concurrent = 96
 
 [policy]
-alpha_ms = 150.0
-beta_ms = 800.0
-aging_horizon_ms = 3000
-batch_base_laxity_ms = 4000
+alpha_ms = 800.0
+beta_ms = 4000.0
+aging_horizon_ms = 16000
+batch_base_laxity_ms = 40000
 quantum_ms = 2
 critical_slice_ms = 2
 interactive_slice_ms = 4
@@ -27,52 +38,52 @@ runtime_ewma_alpha = 0.25
 
 [admission]
 enabled = true
-psi_delay_threshold = 10.0
-psi_reject_threshold = 35.0
-safety_factor = 1.30
-max_delay_ms = 700
-delay_step_ms = 20
-reject_below_priority = 0.82
+psi_delay_threshold = 20.0
+psi_reject_threshold = 60.0
+safety_factor = 1.20
+max_delay_ms = 4000
+delay_step_ms = 200
+reject_below_priority = 0.80
 
 [[workloads]]
 name = "critical-alert"
 class = "critical"
 kind = "cpu"
-count = 60
+count = 240
 arrival = "bursty"
-start_delay_ms = 100
-interarrival_ms = 120
+start_delay_ms = 800
+interarrival_ms = 960
 burst_size = 8
-runtime_ms = 70
+runtime_ms = 560
 runtime_jitter_pct = 25.0
-deadline_ms = 230
+deadline_ms = 1840
 priority = 1.0
 
 [[workloads]]
 name = "interactive-query"
 class = "interactive"
 kind = "mixed"
-count = 120
+count = 480
 arrival = "bursty"
-start_delay_ms = 100
-interarrival_ms = 90
+start_delay_ms = 800
+interarrival_ms = 720
 burst_size = 12
-runtime_ms = 110
+runtime_ms = 880
 runtime_jitter_pct = 30.0
-deadline_ms = 600
+deadline_ms = 4800
 priority = 0.68
-memory_mb = 128
+memory_mb = 8
 io_bytes = 4194304
 
 [[workloads]]
 name = "batch-compaction"
 class = "batch"
 kind = "memory"
-count = 30
+count = 50
 arrival = "fixed"
 start_delay_ms = 0
-interarrival_ms = 75
-runtime_ms = 500
+interarrival_ms = 600
+runtime_ms = 4000
 runtime_jitter_pct = 25.0
 priority = 0.08
-memory_mb = 256
+memory_mb = 16

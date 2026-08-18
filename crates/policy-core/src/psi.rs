@@ -80,3 +80,11 @@ mod tests {
 pub fn read_cpu_pressure() -> Result<CpuPressure> {
     CpuPressure::read()
 }
+
+/// Read CPU PSI from an explicit pressure file.
+///
+/// This is used by the experimental harness to read workload-scoped
+/// cgroup-v2 cpu.pressure instead of system-wide /proc/pressure/cpu.
+pub fn read_cpu_pressure_from(path: impl AsRef<std::path::Path>) -> Result<CpuPressure> {
+    CpuPressure::read_from(path)
+}

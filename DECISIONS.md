@@ -60,3 +60,92 @@ Admission v2 همان task را پذیرفت و response حدود `31.54 ms` ب�
 
 این شاهد برای اصلاح طراحی معتبر است، اما هنوز ادعای برتری عمومی Admission v2 نیست.
 <!-- CHECKPOINT-2026-08-09:END -->
+
+## Paper benchmark engineering decisions — 2026-08-10
+
+### Enforce the configured CPU count physically
+
+`experiment.cpus` must correspond to the CPU resources available to workload
+workers, not merely to a value used by admission calculations. The harness
+therefore partitions CPUs into workload and control-plane sets and enforces
+worker affinity.
+
+### Start the workload clock after initialization
+
+Potentially slow initialization and durable output I/O must finish before the
+workload release origin is established. Infrastructure latency must not
+consume an application's soft-deadline budget before its release.
+
+### Use workload-scoped CPU PSI
+
+Admission decisions use the CPU PSI of a dedicated cgroup containing only
+application workers.
+
+System-wide `/proc/pressure/cpu` was rejected as the admission-pressure
+source because idle experiments demonstrated substantial PSI when both the
+proposed userspace sched_ext scheduler and stock RustLand were active without
+application workload.
+
+### Preserve offered-load semantics
+
+Rejected tasks remain part of the offered workload. Publication evaluation
+must therefore report offered-task deadline goodput, acceptance/rejection
+rate, and completion rate rather than comparing deadline misses only among
+accepted tasks.
+
+### Separate scheduling from admission effects
+
+Paper evaluation must include AFS without admission in addition to full AFS.
+This separates improvements caused by scheduling policy from improvements
+caused by admission/load shedding.
+
+### Bound synthetic memory working sets before experimental freeze
+
+The first sustained overload pilot triggered the host Linux OOM killer
+because many concurrent synthetic workers retained large per-process memory
+working sets. This is an experimental confound, not a scheduler outcome.
+
+The sustained paper profiles therefore use bounded per-worker working sets:
+
+- 8 MiB for mixed interactive work.
+- 16 MiB for explicit memory-oriented batch work.
+
+The correction was made during pilot qualification, before experimental
+freeze.
+
+Task counts, release timing, burst structure, runtimes, deadlines,
+priorities, scheduler parameters, and admission parameters were not changed
+as part of this correction.
+
+Final evaluation must use only the corrected frozen profiles. Pilot v1
+results from before this correction are diagnostic only and must not be
+combined with final measurements.
+
+### Freeze paper metrics and repetition-level aggregation before final runs
+
+The paper analysis contract is frozen before the final benchmark matrix.
+Deadline performance is centered on offered deadline goodput, with rejection,
+completion, and accepted miss rate reported alongside it so admission control
+cannot improve the headline metric merely by rejecting work.
+
+Primary metrics are also computed per workload class. Workload-scoped CPU PSI
+comes from the delegated workload cgroup. AFS scheduler CPU/decision counters
+are treated as AFS-internal overhead rather than a direct cross-method
+overhead comparison.
+
+A repetition is the statistical unit. Per-run metrics are aggregated with a
+two-sided 95% Student-t confidence interval and tasks are not pooled across
+repetitions. Shared manifests preserve method pairing. Pilot results remain
+qualification-only and are excluded from final-paper aggregation.
+
+### Preserve the experimental freeze and continue post-results work on a new branch
+
+The final primary matrix was executed from `experimental-freeze-v1` at commit
+`edcd8eb347f998fc68c705ca770eaa645c8e78be`. The `benchmark-engineering`
+branch and freeze tag are preserved as the experimental reference point.
+
+Post-results analysis, documentation, proposal/report updates, presentation
+work, and remaining secondary evaluations continue on the
+`paper-finalization` branch. The tracked `docs/final-results/` snapshot records
+the validated 120-run primary matrix without adding the ignored raw `results/`
+tree to Git.

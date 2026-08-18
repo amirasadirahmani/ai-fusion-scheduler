@@ -5,8 +5,8 @@ use afs_common::{
 };
 use afs_metadata_manager::MetadataRegistry;
 use afs_policy_core::{
-    decide_admission, read_cpu_pressure, relevant_interference_ns, AdmissionState, CpuPressure,
-    EwmaRuntimeEstimator, PolicyObservation, PsiLine,
+    decide_admission, read_cpu_pressure, read_cpu_pressure_from, relevant_interference_ns,
+    AdmissionState, CpuPressure, EwmaRuntimeEstimator, PolicyObservation, PsiLine,
 };
 use anyhow::{bail, Context, Result};
 use clap::Parser;
@@ -164,21 +164,15 @@ fn main() -> Result<()> {
     })
     .context("failed to install Ctrl-C handler")?;
 
-    let started_ns = monotonic_ns()?;
-    let mut pending: Vec<PendingTask> = plans
-        .iter()
-        .cloned()
-        .map(|plan| PendingTask {
-            next_eligible_ns: started_ns.saturating_add(plan.release_offset_ns),
-            request_arrival_ns: None,
-            delayed_ns: 0,
-            plan,
-        })
-        .collect();
-    let mut active: Vec<ActiveTask> = Vec::new();
-    let mut results: Vec<TaskResult> = Vec::with_capacity(plans.len());
-    let mut outcomes: HashMap<u64, bool> = HashMap::new();
-    let mut completion_times: HashMap<u64, u64> = HashMap::new();
+    // The harness may place this generator in a delegated systemd scope.
+    // Keep workers in a child cgroup so Admission observes workload-only PSI.
+    let workload_cgroup = prepare_workload_cgroup()?;
+
+    // Complete potentially slow control-plane I/O before starting the
+    // workload release clock. Otherwise filesystem latency (notably sync_all()
+    // on virtualized storage) consumes application deadline budget before the
+    // event loop has even started.
+    let prepared_ns = monotonic_ns()?;
 
     write_json_atomic(
         args.output_dir.join("run-input.json"),
@@ -191,9 +185,35 @@ fn main() -> Result<()> {
             "worker": &worker,
             "policy": &cfg.policy,
             "admission": &cfg.admission,
-            "started_ns": started_ns,
+            "workload_cgroup": workload_cgroup
+                .as_ref()
+                .map(|p| p.to_string_lossy().into_owned()),
+            "pressure_source": workload_cgroup
+                .as_ref()
+                .map(|p| p.join("cpu.pressure").to_string_lossy().into_owned())
+                .unwrap_or_else(|| "/proc/pressure/cpu".to_string()),
+            "prepared_ns": prepared_ns,
         }),
     )?;
+
+    // This is the actual workload release origin.
+    let started_ns = monotonic_ns()?;
+
+    let mut pending: Vec<PendingTask> = plans
+        .iter()
+        .cloned()
+        .map(|plan| PendingTask {
+            next_eligible_ns: started_ns.saturating_add(plan.release_offset_ns),
+            request_arrival_ns: None,
+            delayed_ns: 0,
+            plan,
+        })
+        .collect();
+
+    let mut active: Vec<ActiveTask> = Vec::new();
+    let mut results: Vec<TaskResult> = Vec::with_capacity(plans.len());
+    let mut outcomes: HashMap<u64, bool> = HashMap::new();
+    let mut completion_times: HashMap<u64, u64> = HashMap::new();
 
     while !pending.is_empty() || !active.is_empty() {
         if stop.load(Ordering::SeqCst) {
@@ -318,6 +338,7 @@ fn main() -> Result<()> {
                 request_arrival_ns,
                 pending_task.delayed_ns,
                 &active,
+                workload_cgroup.as_deref(),
             )? {
                 LaunchOutcome::Spawned(task) => active.push(task),
                 LaunchOutcome::Delayed {
@@ -377,6 +398,16 @@ fn main() -> Result<()> {
         &result_csv,
         &results,
     );
+    if let Some(cgroup) = workload_cgroup.as_ref() {
+        let pressure_path = cgroup.join("cpu.pressure");
+        if let Ok(text) = fs::read_to_string(&pressure_path) {
+            fs::write(
+                args.output_dir.join("workload-cpu-pressure-final.txt"),
+                text,
+            )?;
+        }
+    }
+
     write_json_atomic(args.output_dir.join("summary.json"), &summary)?;
     write_json_atomic(
         args.output_dir.join("runtime-estimates.json"),
@@ -407,6 +438,73 @@ enum LaunchOutcome {
     Rejected(TaskResult),
 }
 
+fn prepare_workload_cgroup() -> Result<Option<PathBuf>> {
+    if std::env::var_os("AFS_WORKLOAD_CGROUP_SCOPED").is_none() {
+        return Ok(None);
+    }
+
+    let membership =
+        fs::read_to_string("/proc/self/cgroup").context("failed to read /proc/self/cgroup")?;
+
+    let relative = membership
+        .lines()
+        .find_map(|line| line.strip_prefix("0::"))
+        .context("cgroup v2 membership not found in /proc/self/cgroup")?;
+
+    let base = Path::new("/sys/fs/cgroup").join(relative.trim_start_matches('/'));
+
+    let workload = base.join("afs-workload");
+
+    if workload.exists() {
+        fs::remove_dir(&workload).with_context(|| {
+            format!(
+                "failed to remove stale workload cgroup {}",
+                workload.display()
+            )
+        })?;
+    }
+
+    fs::create_dir(&workload).with_context(|| {
+        format!(
+            "failed to create delegated workload cgroup {}",
+            workload.display()
+        )
+    })?;
+
+    let pressure = workload.join("cpu.pressure");
+    if !pressure.is_file() {
+        anyhow::bail!(
+            "workload cgroup has no cpu.pressure file: {}",
+            pressure.display()
+        );
+    }
+
+    tracing::info!(
+        cgroup = %workload.display(),
+        pressure = %pressure.display(),
+        "using workload-scoped CPU PSI"
+    );
+
+    Ok(Some(workload))
+}
+
+fn move_pid_to_workload_cgroup(cgroup: Option<&Path>, pid: i32) -> Result<()> {
+    let Some(cgroup) = cgroup else {
+        return Ok(());
+    };
+
+    let procs = cgroup.join("cgroup.procs");
+
+    fs::write(&procs, format!("{pid}\n")).with_context(|| {
+        format!(
+            "failed to move pid {pid} into workload cgroup {}",
+            cgroup.display()
+        )
+    })?;
+
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 fn launch_task(
     cfg: &ExperimentConfig,
@@ -419,6 +517,7 @@ fn launch_task(
     request_arrival_ns: u64,
     delayed_ns: u64,
     active: &[ActiveTask],
+    workload_cgroup: Option<&Path>,
 ) -> Result<LaunchOutcome> {
     let absolute_deadline_ns = plan
         .relative_deadline_ns
@@ -443,10 +542,20 @@ fn launch_task(
         application_priority: plan.application_priority,
         name: plan.name.clone(),
     };
-    let pressure = read_cpu_pressure().unwrap_or(CpuPressure {
-        some: PsiLine::default(),
-        full: None,
-    });
+    let pressure = if let Some(cgroup) = workload_cgroup {
+        let path = cgroup.join("cpu.pressure");
+        read_cpu_pressure_from(&path).with_context(|| {
+            format!(
+                "failed to read workload-scoped CPU PSI from {}",
+                path.display()
+            )
+        })?
+    } else {
+        read_cpu_pressure().unwrap_or(CpuPressure {
+            some: PsiLine::default(),
+            full: None,
+        })
+    };
     let active_remaining =
         estimate_relevant_active_remaining(active, &metadata, now_ns, &cfg.policy);
     let decision = decide_admission(
@@ -460,6 +569,44 @@ fn launch_task(
         },
         &cfg.admission,
     );
+
+    if std::env::var_os("AFS_TRACE_ADMISSION").is_some() {
+        let decision_lag_ms = now_ns.saturating_sub(request_arrival_ns) as f64 / 1_000_000.0;
+
+        let deadline_left_ms =
+            policy_deadline_ns.map(|deadline| deadline.saturating_sub(now_ns) as f64 / 1_000_000.0);
+
+        let estimated_ms = metadata.estimated_remaining_runtime_ns as f64 / 1_000_000.0;
+
+        let relevant_ms = active_remaining as f64 / 1_000_000.0;
+
+        let predicted_ms = decision.predicted_finish_ns.saturating_sub(now_ns) as f64 / 1_000_000.0;
+
+        let deadline_left_text = deadline_left_ms
+            .map(|v| format!("{v:.3}"))
+            .unwrap_or_else(|| "-".to_string());
+
+        eprintln!(
+            "AFS_ADMISSION_TRACE \
+task={} class={:?} delayed_ms={:.3} \
+decision_lag_ms={:.3} deadline_left_ms={} \
+estimated_ms={:.3} relevant_ms={:.3} \
+active={} psi_avg10={:.2} predicted_ms={:.3} \
+decision={:?} reason={}",
+            metadata.task_id,
+            metadata.workload_class,
+            delayed_ns as f64 / 1_000_000.0,
+            decision_lag_ms,
+            deadline_left_text,
+            estimated_ms,
+            relevant_ms,
+            active.len(),
+            pressure.some.avg10,
+            predicted_ms,
+            decision.decision,
+            decision.reason,
+        );
+    }
 
     let final_admission = match decision.decision {
         AdmissionDecision::Admit => {
@@ -552,7 +699,15 @@ fn launch_task(
     };
     write_json_atomic(&spec_path, &spec)?;
 
-    let mut child = Command::new(worker)
+    let mut command = if let Ok(cpu_list) = std::env::var("AFS_WORKLOAD_CPU_LIST") {
+        let mut cmd = Command::new("taskset");
+        cmd.arg("-c").arg(cpu_list).arg(worker);
+        cmd
+    } else {
+        Command::new(worker)
+    };
+
+    let mut child = command
         .arg("--spec")
         .arg(&spec_path)
         .spawn()
@@ -562,6 +717,17 @@ fn launch_task(
         let _ = child.kill();
         let _ = child.wait();
         return Err(err).context(format!("worker {pid} failed before becoming ready"));
+    }
+
+    // The worker starts stopped. Move it into the workload-only cgroup
+    // before applying SCHED_EXT/SCHED_DEADLINE and before SIGCONT so its
+    // runtime pressure is accounted only to the workload cgroup.
+    if let Err(err) = move_pid_to_workload_cgroup(workload_cgroup, pid) {
+        let _ = signal(pid, libc::SIGCONT);
+        let _ = child.kill();
+        let _ = child.wait();
+        let _ = registry.unregister(pid);
+        return Err(err);
     }
 
     let policy_result = match method {
